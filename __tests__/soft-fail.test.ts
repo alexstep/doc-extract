@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, spyOn } from 'bun:test'
 import docExtract from '../doc-extract.js'
 
-const sample1Path = new URL('../fixtures/sample1.pdf', import.meta.url).pathname
+const sample2Path = new URL('../fixtures/sample2.pdf', import.meta.url).pathname
 
 describe('extractText soft failures', () => {
   afterEach(() => {
@@ -9,13 +9,13 @@ describe('extractText soft failures', () => {
   })
 
   it('returns empty string for image-only PDF without throwing', async () => {
-    const text = await docExtract.extractText(sample1Path)
+    const text = await docExtract.extractText(sample2Path)
     expect(text).toBe('')
   })
 
   it('logs friendly PDF message when debug is true', async () => {
     const debugSpy = spyOn(console, 'debug').mockImplementation(() => {})
-    const text = await docExtract.extractText(sample1Path, { debug: true })
+    const text = await docExtract.extractText(sample2Path, { debug: true })
     expect(text).toBe('')
     expect(debugSpy).toHaveBeenCalled()
     const logged = debugSpy.mock.calls.map((call) => String(call[1])).join('\n')
