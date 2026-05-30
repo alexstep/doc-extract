@@ -8,6 +8,7 @@ export interface DocExtractOptions {
 
 export interface ExtractCallOptions {
   format?: string
+  unknown?: 'reject' | 'text-if-likely' | 'text-lossy'
   maxFileSizeMB?: number
   inMemoryThresholdMB?: number
   tempDir?: string

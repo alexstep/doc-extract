@@ -5,7 +5,7 @@ use zip::ZipArchive;
 
 use crate::error::ExtractError;
 use crate::formats::open_file;
-use crate::limits::max_entry_size;
+use crate::formats::zip_util::read_zip_entry_limited;
 
 const MAX_TOTAL_EPUB_SIZE: usize = 10 * 1024 * 1024;
 
@@ -33,11 +33,7 @@ pub fn extract_reader<R: Read + Seek>(reader: R) -> Result<String, ExtractError>
       continue;
     }
 
-    let mut body = Vec::new();
-    file
-      .take(max_entry_size() as u64)
-      .read_to_end(&mut body)
-      .map_err(|err| ExtractError::Parse(format!("epub read {name}: {err}")))?;
+    let body = read_zip_entry_limited(&mut file, &format!("epub read {name}"))?;
 
     total_size = total_size.saturating_add(body.len());
     if total_size > MAX_TOTAL_EPUB_SIZE {

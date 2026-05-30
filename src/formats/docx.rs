@@ -5,7 +5,7 @@ use zip::ZipArchive;
 
 use crate::error::ExtractError;
 use crate::formats::open_file;
-use crate::limits::max_entry_size;
+use crate::formats::zip_util::read_zip_entry_limited;
 
 pub fn extract(input: &[u8]) -> Result<String, ExtractError> {
   extract_reader(std::io::Cursor::new(input))
@@ -23,11 +23,6 @@ pub fn extract_reader<R: Read + Seek>(reader: R) -> Result<String, ExtractError>
     .by_name("word/document.xml")
     .map_err(|err| ExtractError::Parse(format!("docx word/document.xml: {err}")))?;
 
-  let mut xml = Vec::new();
-  entry
-    .take(max_entry_size() as u64)
-    .read_to_end(&mut xml)
-    .map_err(|err| ExtractError::Parse(format!("docx read xml: {err}")))?;
-
+  let xml = read_zip_entry_limited(&mut entry, "docx word/document.xml")?;
   super::text::extract_xml(&xml)
 }

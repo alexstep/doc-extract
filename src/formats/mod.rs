@@ -4,6 +4,7 @@ use std::path::Path;
 use crate::error::ExtractError;
 use crate::input::read_file_bytes;
 
+pub mod zip_util;
 pub mod docx;
 pub mod epub;
 pub mod fb2;

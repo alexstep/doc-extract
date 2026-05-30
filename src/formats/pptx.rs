@@ -7,7 +7,7 @@ use zip::ZipWriter;
 
 use crate::error::ExtractError;
 use crate::formats::open_file;
-use crate::limits::max_entry_size;
+use crate::formats::zip_util::read_zip_entry_limited;
 
 const MAX_TOTAL_SLIDES_SIZE: usize = 10 * 1024 * 1024;
 
@@ -41,11 +41,7 @@ pub fn extract_reader<R: Read + Seek>(reader: R) -> Result<String, ExtractError>
       .parse::<usize>()
       .unwrap_or(slides.len() + 1);
 
-    let mut xml = Vec::new();
-    entry
-      .take(max_entry_size() as u64)
-      .read_to_end(&mut xml)
-      .map_err(|err| ExtractError::Parse(format!("pptx read {name}: {err}")))?;
+    let xml = read_zip_entry_limited(&mut entry, &format!("pptx read {name}"))?;
 
     total_size = total_size.saturating_add(xml.len());
     if total_size > MAX_TOTAL_SLIDES_SIZE {

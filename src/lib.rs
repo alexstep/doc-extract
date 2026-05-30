@@ -12,7 +12,10 @@ use napi::bindgen_prelude::Buffer;
 use napi_derive::napi;
 use serde_json::Value;
 
-use crate::detect::{detect_format, detect_format_path, extract_with_format, extract_with_format_path};
+use crate::detect::{
+  detect_format, detect_format_path, extract_with_format, extract_with_format_path, DetectOptions,
+  UnknownPolicy,
+};
 use crate::error::ExtractError;
 use crate::input::validate_path_size;
 use crate::limits::{effective_max_bytes, exceeds_limit, global_in_memory_threshold};
@@ -20,6 +23,9 @@ use crate::limits::{effective_max_bytes, exceeds_limit, global_in_memory_thresho
 #[napi(object)]
 pub struct ExtractNativeOptions {
   pub format: Option<String>,
+  #[napi(js_name = "extensionHint")]
+  pub extension_hint: Option<String>,
+  pub unknown: Option<String>,
   #[napi(js_name = "maxBytes")]
   pub max_bytes: Option<u32>,
 }
@@ -62,19 +68,29 @@ pub fn set_max_working_set_mb(n: u32) {
 pub async fn extract_text(input: Buffer, options: Option<ExtractNativeOptions>) -> napi::Result<String> {
   let options = options.unwrap_or(ExtractNativeOptions {
     format: None,
+    extension_hint: None,
+    unknown: None,
     max_bytes: None,
   });
   let limit = effective_max_bytes(options.max_bytes);
   validate_size(&input, limit)?;
   let bytes = input.to_vec();
-  let format_hint = options.format.filter(|value| !value.trim().is_empty());
+  let explicit_format = options
+    .format
+    .filter(|value| !value.trim().is_empty());
+  let extension_hint = options
+    .extension_hint
+    .filter(|value| !value.trim().is_empty());
+  let unknown_policy = UnknownPolicy::parse(options.unknown.as_deref());
   let weight = working_set_weight(bytes.len());
 
   concurrency::with_permit(weight, move || {
-    let format = match format_hint.as_deref() {
-      Some(format) => detect_format(&bytes, Some(format))?,
-      None => detect_format(&bytes, None)?,
+    let detect_options = DetectOptions {
+      explicit_format: explicit_format.as_deref(),
+      extension_hint: extension_hint.as_deref(),
+      unknown_policy,
     };
+    let format = detect_format(&bytes, detect_options)?;
     extract_with_format(&bytes, &format)
   })
   .await
@@ -85,19 +101,29 @@ pub async fn extract_text(input: Buffer, options: Option<ExtractNativeOptions>) 
 pub async fn extract_text_from_path(path: String, options: Option<ExtractNativeOptions>) -> napi::Result<String> {
   let options = options.unwrap_or(ExtractNativeOptions {
     format: None,
+    extension_hint: None,
+    unknown: None,
     max_bytes: None,
   });
   let path_buf = PathBuf::from(path);
   let limit = effective_max_bytes(options.max_bytes);
   let file_size = validate_path_size(&path_buf, limit)? as usize;
-  let format_hint = options.format.filter(|value| !value.trim().is_empty());
+  let explicit_format = options
+    .format
+    .filter(|value| !value.trim().is_empty());
+  let extension_hint = options
+    .extension_hint
+    .filter(|value| !value.trim().is_empty());
+  let unknown_policy = UnknownPolicy::parse(options.unknown.as_deref());
   let weight = working_set_weight(file_size);
 
   concurrency::with_permit(weight, move || {
-    let format = match format_hint.as_deref() {
-      Some(format) => detect_format_path(&path_buf, Some(format))?,
-      None => detect_format_path(&path_buf, None)?,
+    let detect_options = DetectOptions {
+      explicit_format: explicit_format.as_deref(),
+      extension_hint: extension_hint.as_deref(),
+      unknown_policy,
     };
+    let format = detect_format_path(&path_buf, detect_options)?;
     extract_with_format_path(&path_buf, &format, limit)
   })
   .await
@@ -190,7 +216,15 @@ mod tests {
   fn extracts_plain_text_from_fixture_path() {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("fixtures/sample.txt");
     let limit = limits::UNLIMITED_BYTES;
-    let format = detect::detect_format_path(&path, None).expect("detect path");
+    let format = detect::detect_format_path(
+      &path,
+      detect::DetectOptions {
+        explicit_format: None,
+        extension_hint: None,
+        unknown_policy: detect::UnknownPolicy::TextIfLikely,
+      },
+    )
+    .expect("detect path");
     assert_eq!(format, "txt");
     let text = detect::extract_with_format_path(&path, &format, limit).expect("extract path");
     assert!(text.contains("CalendarTG"));

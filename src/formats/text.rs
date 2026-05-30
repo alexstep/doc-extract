@@ -8,6 +8,7 @@ use encoding_rs::{UTF_16BE, UTF_16LE, UTF_8, WINDOWS_1252};
 use quick_xml::events::Event;
 use quick_xml::reader::Reader;
 
+use crate::detect::text_heuristic;
 use crate::error::ExtractError;
 use crate::input::validate_path_size;
 use crate::formats::read_path_bytes;
@@ -23,6 +24,11 @@ pub fn decode_text_with_bom(input: &[u8]) -> String {
   }
   if input.len() >= 3 && input[0] == 0xEF && input[1] == 0xBB && input[2] == 0xBF {
     let (text, _, _) = UTF_8.decode(&input[3..]);
+    return text.into_owned();
+  }
+
+  if let Some(encoding) = text_heuristic::utf16_endian_from_sample(input) {
+    let (text, _, _) = encoding.decode(input);
     return text.into_owned();
   }
 

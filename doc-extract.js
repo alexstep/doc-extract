@@ -1,9 +1,9 @@
 'use strict'
 
 const { createWriteStream } = require('node:fs')
-const { mkdtemp, stat, unlink, writeFile } = require('node:fs/promises')
+const { mkdtemp, rm, stat, unlink, writeFile } = require('node:fs/promises')
 const { tmpdir } = require('node:os')
-const { extname, join } = require('node:path')
+const { extname, join, dirname } = require('node:path')
 const { fileURLToPath } = require('node:url')
 
 const native = require('./index.js')
@@ -189,6 +189,7 @@ async function createTempFilePath(tempDir) {
 async function cleanupTempPath(tempPath) {
   if (!tempPath) return
   await unlink(tempPath).catch(() => {})
+  await rm(dirname(tempPath), { recursive: true, force: true }).catch(() => {})
 }
 
 async function writeBufferToTemp(buffer, tempDir) {
@@ -299,12 +300,18 @@ function hintFromUrl(url) {
   }
 }
 
-function nativeOptions(formatHint, callOptions, instance) {
+function nativeOptions(explicitFormat, extensionHint, callOptions, instance) {
   const maxFileSizeMB = effectiveMaxFileSizeMB(instance, callOptions)
-  return {
+  const options = {
     maxBytes: mbToBytes(maxFileSizeMB),
-    format: formatHint,
+    unknown: callOptions.unknown ?? 'text-if-likely',
   }
+  if (explicitFormat != null && explicitFormat !== '') {
+    options.format = explicitFormat
+  } else if (extensionHint) {
+    options.extensionHint = extensionHint
+  }
+  return options
 }
 
 async function runExtract(instance, input, formatOrOptions) {
@@ -317,9 +324,11 @@ async function runExtract(instance, input, formatOrOptions) {
     try {
       const resolved = await resolveInput(input, instance, callOptions)
       cleanup = resolved.cleanup
-      formatHint = callOptions.format ?? resolved.hint
+      const explicitFormat = callOptions.format
+      const extensionHint = explicitFormat == null ? resolved.hint : undefined
+      formatHint = explicitFormat ?? resolved.hint
 
-      const options = nativeOptions(formatHint, callOptions, instance)
+      const options = nativeOptions(explicitFormat, extensionHint, callOptions, instance)
       if (resolved.mode === 'path') {
         return await native.extractTextFromPath(resolved.path, options)
       }
@@ -410,6 +419,7 @@ class DocExtract {
   }
 
   static setMaxConcurrent(n) {
+    if (n == null || n < 0) return
     if (n === 0) return
     native.setMaxConcurrent(n)
   }

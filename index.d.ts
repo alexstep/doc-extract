@@ -2,6 +2,8 @@
 /* eslint-disable */
 export interface ExtractNativeOptions {
   format?: string
+  extensionHint?: string
+  unknown?: string
   maxBytes?: number
 }
 

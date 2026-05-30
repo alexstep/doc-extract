@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'bun:test'
+import { mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import docExtract from '../doc-extract.js'
 import { fixtureFile, fixturePath } from './helpers.ts'
 
@@ -78,10 +81,20 @@ describe('DocExtract.extractText', () => {
     expect(value).toBe('')
   })
 
-  it('rejects payload larger than limit', async () => {
+  it('rejects payload larger than limit via native buffer check', async () => {
     docExtract.setMaxFilesizeMB(1)
     const bytes = Buffer.alloc(2 * 1024 * 1024, 1)
     await expect(docExtract.extractText(bytes, 'txt')).rejects.toThrow()
+    docExtract.setMaxFilesizeMB(42)
+  })
+
+  it('rejects path larger than limit via JS validation', async () => {
+    docExtract.setMaxFilesizeMB(1)
+    const dir = await mkdtemp(join(tmpdir(), 'doc-extract-limit-'))
+    const filePath = join(dir, 'big.txt')
+    await writeFile(filePath, Buffer.alloc(2 * 1024 * 1024, 0x42))
+    await expect(docExtract.extractText(filePath, 'txt')).rejects.toThrow('Input exceeds max size')
+    await rm(dir, { recursive: true, force: true })
     docExtract.setMaxFilesizeMB(42)
   })
 

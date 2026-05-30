@@ -1,3 +1,5 @@
+pub mod text_heuristic;
+
 use std::io::{Cursor, Read, Seek};
 use std::path::Path;
 
@@ -13,51 +15,166 @@ const SUPPORTED: &[&str] = &[
   "log", "pkpass",
 ];
 
+const TEXT_EXTENSION_HINTS: &[&str] = &["txt", "md", "markdown", "csv", "tsv", "log", "json", "jsonl", "html", "xml"];
+
 const DETECT_HEAD_BYTES: usize = 4096;
 
-pub fn detect_format(bytes: &[u8], hint: Option<&str>) -> Result<String, ExtractError> {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum UnknownPolicy {
+  Reject,
+  TextIfLikely,
+  TextLossy,
+}
+
+impl UnknownPolicy {
+  pub fn parse(value: Option<&str>) -> Self {
+    match value.map(str::trim).map(|s| s.to_ascii_lowercase()).as_deref() {
+      Some("reject") => Self::Reject,
+      Some("text-lossy") => Self::TextLossy,
+      _ => Self::TextIfLikely,
+    }
+  }
+}
+
+pub struct DetectOptions<'a> {
+  pub explicit_format: Option<&'a str>,
+  pub extension_hint: Option<&'a str>,
+  pub unknown_policy: UnknownPolicy,
+}
+
+impl<'a> DetectOptions<'a> {
+  pub fn legacy_hint(hint: Option<&'a str>) -> Self {
+    Self {
+      explicit_format: hint,
+      extension_hint: None,
+      unknown_policy: UnknownPolicy::TextIfLikely,
+    }
+  }
+}
+
+pub fn detect_format(bytes: &[u8], options: DetectOptions<'_>) -> Result<String, ExtractError> {
   let zip_kind = if looks_like_zip(bytes) {
     inspect_zip(Cursor::new(bytes))?
   } else {
     None
   };
-  resolve_format(hint, bytes, zip_kind.as_deref())
+  resolve_format(bytes, zip_kind.as_deref(), options)
 }
 
-pub fn detect_format_path(path: &Path, hint: Option<&str>) -> Result<String, ExtractError> {
+pub fn detect_format_path(path: &Path, options: DetectOptions<'_>) -> Result<String, ExtractError> {
   let head = read_file_head(path, DETECT_HEAD_BYTES)?;
   let zip_kind = if looks_like_zip(&head) {
     with_file_reader(path, |file| inspect_zip(file))?
   } else {
     None
   };
-  resolve_format(hint, &head, zip_kind.as_deref())
+  resolve_format(&head, zip_kind.as_deref(), options)
 }
 
-fn resolve_format(hint: Option<&str>, bytes: &[u8], zip_kind: Option<&str>) -> Result<String, ExtractError> {
-  if let Some(hint) = hint.filter(|value| !value.trim().is_empty()) {
-    let normalized = normalize_hint(hint);
-    if !is_supported(&normalized) {
-      return Err(ExtractError::UnsupportedFormat(normalized));
-    }
-    if normalized == "pkpass" {
-      return Ok("pkpass".to_string());
-    }
-    if let Some(zip) = zip_kind {
-      if zip_based_format(&normalized) && normalized != zip {
-        return Ok(zip.to_string());
-      }
-    }
-    return Ok(normalized);
+fn resolve_format(
+  bytes: &[u8],
+  zip_kind: Option<&str>,
+  options: DetectOptions<'_>,
+) -> Result<String, ExtractError> {
+  let magic = detect_from_magic(bytes, zip_kind);
+
+  if let Some(explicit) = options.explicit_format.filter(|value| !value.trim().is_empty()) {
+    return resolve_with_hint(normalize_hint(explicit), bytes, magic.as_deref(), zip_kind, true);
   }
 
-  if let Some(detected) = detect_from_magic(bytes, zip_kind) {
+  if let Some(extension) = options.extension_hint.filter(|value| !value.trim().is_empty()) {
+    let normalized = normalize_hint(extension);
+    if magic_conflicts_with_hint(&normalized, magic.as_deref(), zip_kind) {
+      if let Some(detected) = magic {
+        return Ok(detected);
+      }
+    }
+    if is_text_extension_hint(&normalized) && !text_heuristic::looks_like_text(bytes) {
+      return apply_unknown_policy(bytes, options.unknown_policy);
+    }
+    return resolve_with_hint(normalized, bytes, magic.as_deref(), zip_kind, false);
+  }
+
+  if let Some(detected) = magic {
     return Ok(detected);
   }
 
-  Err(ExtractError::UnsupportedFormat(
-    hint.unwrap_or("unknown").to_string(),
-  ))
+  apply_unknown_policy(bytes, options.unknown_policy)
+}
+
+fn resolve_with_hint(
+  normalized: String,
+  bytes: &[u8],
+  magic: Option<&str>,
+  zip_kind: Option<&str>,
+  explicit: bool,
+) -> Result<String, ExtractError> {
+  if !is_supported(&normalized) {
+    return Err(ExtractError::UnsupportedFormat(normalized));
+  }
+
+  if !explicit {
+    if let Some(detected) = magic {
+      if magic_conflicts_with_hint(&normalized, Some(detected), zip_kind) {
+        return Ok(detected.to_string());
+      }
+    }
+  } else if normalized == "pkpass" {
+    return Ok("pkpass".to_string());
+  } else if let Some(zip) = zip_kind {
+    if zip_based_format(&normalized) && normalized != zip {
+      return Ok(zip.to_string());
+    }
+  }
+
+  if is_text_extension_hint(&normalized) && !text_heuristic::looks_like_text(bytes) {
+    return Err(ExtractError::UnsupportedFormat("looks_binary".to_string()));
+  }
+
+  Ok(normalized)
+}
+
+fn magic_conflicts_with_hint(hint: &str, magic: Option<&str>, zip_kind: Option<&str>) -> bool {
+  let Some(magic) = magic else {
+    return false;
+  };
+  if hint == magic {
+    return false;
+  }
+  if zip_kind == Some(magic) && zip_based_format(hint) {
+    return hint != magic;
+  }
+  if hint == "pdf" && magic != "pdf" {
+    return true;
+  }
+  if zip_based_format(hint) && zip_kind == Some(magic) && hint != magic {
+    return true;
+  }
+  hint != magic && !is_text_extension_hint(hint)
+}
+
+fn is_text_extension_hint(format: &str) -> bool {
+  TEXT_EXTENSION_HINTS.contains(&format)
+}
+
+fn apply_unknown_policy(bytes: &[u8], policy: UnknownPolicy) -> Result<String, ExtractError> {
+  match policy {
+    UnknownPolicy::Reject => Err(ExtractError::UnsupportedFormat("unknown".to_string())),
+    UnknownPolicy::TextIfLikely => {
+      if text_heuristic::looks_like_text(bytes) {
+        Ok("txt".to_string())
+      } else {
+        Err(ExtractError::UnsupportedFormat("looks_binary".to_string()))
+      }
+    }
+    UnknownPolicy::TextLossy => {
+      if text_heuristic::looks_obviously_binary(bytes) {
+        Err(ExtractError::UnsupportedFormat("looks_binary".to_string()))
+      } else {
+        Ok("txt".to_string())
+      }
+    }
+  }
 }
 
 fn normalize_hint(hint: &str) -> String {
@@ -120,9 +237,6 @@ fn detect_from_magic(bytes: &[u8], zip_kind: Option<&str>) -> Option<String> {
     }
     return Some("json".to_string());
   }
-  if !bytes.is_empty() && bytes.iter().all(|b| b.is_ascii() || b.is_ascii_whitespace()) {
-    return Some("txt".to_string());
-  }
   None
 }
 
@@ -152,7 +266,7 @@ fn inspect_zip<R: Read + Seek>(reader: R) -> Result<Option<String>, ExtractError
     return Ok(Some("pptx".to_string()));
   }
 
-  if let Ok(mut file) = archive.by_name("mimetype") {
+  if let Ok(file) = archive.by_name("mimetype") {
     let mut mimetype = String::new();
     file
       .take(256)
@@ -175,7 +289,7 @@ fn inspect_zip<R: Read + Seek>(reader: R) -> Result<Option<String>, ExtractError
 
 #[allow(dead_code)]
 pub fn extract_auto(bytes: &[u8], hint: Option<&str>) -> Result<String, ExtractError> {
-  let format = detect_format(bytes, hint)?;
+  let format = detect_format(bytes, DetectOptions::legacy_hint(hint))?;
   extract_with_format(bytes, &format)
 }
 
@@ -203,19 +317,57 @@ mod tests {
 
   #[test]
   fn detects_pdf_magic() {
-    assert_eq!(detect_format(b"%PDF-1.4 test", None).unwrap(), "pdf");
+    assert_eq!(
+      detect_format(b"%PDF-1.4 test", DetectOptions::legacy_hint(None)).unwrap(),
+      "pdf"
+    );
   }
 
   #[test]
   fn hint_normalizes_vcard() {
     assert_eq!(
-      detect_format(b"BEGIN:VCARD\nVERSION:3.0\nEND:VCARD", Some("vcard")).unwrap(),
+      detect_format(
+        b"BEGIN:VCARD\nVERSION:3.0\nEND:VCARD",
+        DetectOptions::legacy_hint(Some("vcard"))
+      )
+      .unwrap(),
       "vcf"
     );
   }
 
   #[test]
   fn detects_plain_text_fallback() {
-    assert_eq!(detect_format(b"hello calendar", None).unwrap(), "txt");
+    assert_eq!(
+      detect_format(b"hello calendar", DetectOptions::legacy_hint(None)).unwrap(),
+      "txt"
+    );
+  }
+
+  #[test]
+  fn rejects_binary_with_reject_policy() {
+    let bytes: Vec<u8> = (0..512).map(|i| (i % 256) as u8).collect();
+    let result = detect_format(
+      &bytes,
+      DetectOptions {
+        explicit_format: None,
+        extension_hint: None,
+        unknown_policy: UnknownPolicy::Reject,
+      },
+    );
+    assert!(result.is_err());
+  }
+
+  #[test]
+  fn magic_overrides_lying_pdf_extension() {
+    let zip_head = b"PK\x03\x04";
+    let result = detect_format(
+      zip_head,
+      DetectOptions {
+        explicit_format: None,
+        extension_hint: Some("pdf"),
+        unknown_policy: UnknownPolicy::TextIfLikely,
+      },
+    );
+    assert!(result.is_err() || result.unwrap() != "pdf");
   }
 }

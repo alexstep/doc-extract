@@ -230,6 +230,9 @@ jobs:
       - name: List npm packages
         run: ls -R ./npm
 
+      - name: Verify scoped loader
+        run: grep -q '@alexstep/doc-extract-' index.js
+
       - name: Publish
         run: npm publish --access public
         env:

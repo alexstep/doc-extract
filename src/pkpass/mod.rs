@@ -10,6 +10,7 @@ use zip::ZipArchive;
 
 use crate::error::ExtractError;
 use crate::formats::text::decode_text_with_bom;
+use crate::formats::zip_util::read_zip_entry_limited;
 use crate::input::validate_path_size;
 use crate::limits::{MAX_IMAGE_SIZE, effective_entry_size};
 
@@ -104,7 +105,7 @@ fn read_strip_image(files: &HashMap<String, Vec<u8>>) -> Option<String> {
 
 fn read_relevant_files<R: Read + Seek>(
   reader: R,
-  entry_limit: usize,
+  _entry_limit: usize,
 ) -> Result<HashMap<String, Vec<u8>>, ExtractError> {
   let mut archive =
     ZipArchive::new(reader).map_err(|err| ExtractError::Parse(format!("pkpass zip: {err}")))?;
@@ -122,11 +123,7 @@ fn read_relevant_files<R: Read + Seek>(
       continue;
     }
 
-    let mut bytes = Vec::new();
-    file
-      .take(entry_limit as u64)
-      .read_to_end(&mut bytes)
-      .map_err(|err| ExtractError::Parse(format!("pkpass read {name}: {err}")))?;
+    let bytes = read_zip_entry_limited(&mut file, &format!("pkpass read {name}"))?;
     files.insert(name, bytes);
   }
 
