@@ -1,0 +1,31 @@
+# Rust
+target/
+
+# napi-rs native addon (package root)
+*.node
+
+# Platform npm packages (generated: bunx napi create-npm-dirs)
+npm/
+
+# WASI build output (package root)
+doc-extract.wasi.cjs
+doc-extract.wasi-browser.js
+doc-extract.*.wasm
+wasi-worker.mjs
+wasi-worker-browser.mjs
+
+# CI artifact staging
+artifacts/
+
+# npm pack
+*.tgz
+
+# Node
+node_modules/
+
+# OS
+.DS_Store
+
+# napi-rs / tooling caches
+.napi/
+

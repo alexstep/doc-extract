@@ -1,0 +1,227 @@
+name: Release
+
+env:
+  DEBUG: napi:*
+  APP_NAME: doc-extract
+  MACOSX_DEPLOYMENT_TARGET: '10.13'
+  CARGO_INCREMENTAL: '1'
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        settings:
+          - host: macos-latest
+            target: x86_64-apple-darwin
+            build: bunx napi build --platform --release --target x86_64-apple-darwin
+          - host: macos-latest
+            target: aarch64-apple-darwin
+            build: bunx napi build --platform --release --target aarch64-apple-darwin
+          - host: windows-latest
+            target: x86_64-pc-windows-msvc
+            build: bunx napi build --platform --release --target x86_64-pc-windows-msvc
+          - host: windows-latest
+            target: i686-pc-windows-msvc
+            build: bunx napi build --platform --release --target i686-pc-windows-msvc
+          - host: windows-latest
+            target: aarch64-pc-windows-msvc
+            build: bunx napi build --platform --release --target aarch64-pc-windows-msvc
+          - host: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            build: bunx napi build --platform --release --target x86_64-unknown-linux-gnu --use-napi-cross
+          - host: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            build: bunx napi build --platform --release --target x86_64-unknown-linux-musl -x
+          - host: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            build: bunx napi build --platform --release --target aarch64-unknown-linux-gnu --use-napi-cross
+          - host: ubuntu-latest
+            target: aarch64-unknown-linux-musl
+            build: bunx napi build --platform --release --target aarch64-unknown-linux-musl -x
+          - host: ubuntu-latest
+            target: armv7-unknown-linux-gnueabihf
+            build: bunx napi build --platform --release --target armv7-unknown-linux-gnueabihf --use-napi-cross
+          - host: ubuntu-latest
+            target: wasm32-wasip1-threads
+            build: bunx napi build --platform --release --target wasm32-wasip1-threads
+    name: build ${{ matrix.settings.target }}
+    runs-on: ${{ matrix.settings.host }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.settings.target }}
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            ~/.napi-rs
+            target/
+          key: release-${{ matrix.settings.target }}-${{ matrix.settings.host }}-${{ hashFiles('**/Cargo.lock') }}
+
+      - uses: mlugg/setup-zig@v2
+        if: contains(matrix.settings.target, 'musl')
+        with:
+          version: 0.14.1
+
+      - uses: taiki-e/install-action@v2
+        if: contains(matrix.settings.target, 'musl')
+        with:
+          tool: cargo-zigbuild
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build
+        run: ${{ matrix.settings.build }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bindings-${{ matrix.settings.target }}
+          path: |
+            ${{ env.APP_NAME }}.*.node
+            ${{ env.APP_NAME }}.*.wasm
+          if-no-files-found: error
+
+  build-freebsd:
+    runs-on: ubuntu-latest
+    name: build x86_64-unknown-freebsd
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: cross-platform-actions/action@v1.1.0
+        env:
+          DEBUG: napi:*
+        with:
+          operating_system: freebsd
+          version: '14.2'
+          run: |
+            sudo pkg install -y curl node npm rust
+            curl -fsSL https://bun.sh/install | bash
+            export PATH="$HOME/.bun/bin:$PATH"
+            bun install
+            bunx napi build --platform --release --target x86_64-unknown-freebsd
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bindings-x86_64-unknown-freebsd
+          path: ${{ env.APP_NAME }}.*.node
+          if-no-files-found: error
+
+  test-native:
+    name: test ${{ matrix.settings.target }}
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        settings:
+          - host: macos-latest
+            target: aarch64-apple-darwin
+          - host: windows-latest
+            target: x86_64-pc-windows-msvc
+          - host: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+    runs-on: ${{ matrix.settings.host }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - run: bun install
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: bindings-${{ matrix.settings.target }}
+          path: .
+
+      - run: bun test
+
+  test-wasi:
+    name: test wasm32-wasip1-threads
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - run: bun install
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: bindings-wasm32-wasip1-threads
+          path: .
+
+      - run: bun test
+        env:
+          NAPI_RS_FORCE_WASI: error
+
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    needs:
+      - build
+      - build-freebsd
+      - test-native
+      - test-wasi
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: https://registry.npmjs.org
+
+      - run: bun install
+
+      - run: bunx napi create-npm-dirs
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - run: bunx napi artifacts
+
+      - name: List npm packages
+        run: ls -R ./npm
+
+      - name: Publish
+        run: |
+          npm config set provenance true
+          npm publish --access public
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

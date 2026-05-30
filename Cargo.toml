@@ -1,0 +1,30 @@
+[package]
+name = "doc-extract"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+base64 = "0.22"
+calamine = "0.31"
+csv = "1.3"
+docx-rs = "0.4"
+encoding_rs = "0.8"
+epub = "2.1"
+html2text = "0.13"
+ical = "0.11"
+napi = { version = "3", default-features = false, features = ["napi6", "async", "tokio_rt", "serde-json"] }
+napi-derive = "3"
+tokio = { version = "1", features = ["rt", "sync"] }
+pdf-extract = "0.7"
+quick-xml = "0.38"
+regex = "1.11"
+serde_json = "1.0"
+thiserror = "1.0"
+memmap2 = "0.9"
+zip = { version = "2.2", default-features = false, features = ["deflate"] }
+
+[build-dependencies]
+napi-build = "2"

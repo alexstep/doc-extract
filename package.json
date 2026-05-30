@@ -1,0 +1,68 @@
+{
+  "name": "@alexstep/doc-extract",
+  "version": "0.1.0",
+  "description": "Native document text extraction for Node.js and Bun (PDF, Office, EPUB, and more)",
+  "license": "MIT",
+  "type": "commonjs",
+  "main": "doc-extract.js",
+  "types": "doc-extract.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alexstep/doc-extract.git"
+  },
+  "keywords": [
+    "napi-rs",
+    "pdf",
+    "docx",
+    "text-extraction",
+    "rust",
+    "native"
+  ],
+  "files": [
+    "doc-extract.js",
+    "doc-extract.d.ts",
+    "index.js",
+    "index.d.ts",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "artifacts": "napi artifacts",
+    "build": "napi build --platform --release",
+    "build:debug": "napi build --platform",
+    "cargo:test": "cargo test",
+    "prepublishOnly": "napi create-npm-dirs && napi prepublish -t npm",
+    "test": "bun test",
+    "test:show": "bun test __tests__/show-extract.test.ts",
+    "version": "napi version"
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "^3.7.0",
+    "@types/bun": "^1.3.3",
+    "fflate": "^0.8.2"
+  },
+  "napi": {
+    "binaryName": "doc-extract",
+    "targets": [
+      "x86_64-pc-windows-msvc",
+      "i686-pc-windows-msvc",
+      "aarch64-pc-windows-msvc",
+      "x86_64-apple-darwin",
+      "aarch64-apple-darwin",
+      "x86_64-unknown-linux-gnu",
+      "x86_64-unknown-linux-musl",
+      "aarch64-unknown-linux-gnu",
+      "aarch64-unknown-linux-musl",
+      "armv7-unknown-linux-gnueabihf",
+      "x86_64-unknown-freebsd",
+      "wasm32-wasip1-threads"
+    ]
+  },
+  "engines": {
+    "node": ">= 18"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  }
+}

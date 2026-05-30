@@ -1,0 +1,23 @@
+# Rust sources & build artifacts
+src/
+target/
+Cargo.toml
+Cargo.lock
+build.rs
+
+# Tests, fixtures, examples
+__tests__/
+fixtures/
+examples/
+
+# Dev tooling & caches
+node_modules/
+.napi/
+bun.lock
+.git/
+.gitignore
+.DS_Store
+
+# Local-only / oversized fixtures (also in .gitignore)
+fixtures/sample1.pdf
+fixtures/sample2.pdf
