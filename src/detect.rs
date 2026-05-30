@@ -17,7 +17,8 @@ const SUPPORTED: &[&str] = &[
 
 const TEXT_EXTENSION_HINTS: &[&str] = &["txt", "md", "markdown", "csv", "tsv", "log", "json", "jsonl", "html", "xml"];
 
-const DETECT_HEAD_BYTES: usize = 4096;
+const MAGIC_HEAD_BYTES: usize = 4096;
+const TEXT_HEURISTIC_SAMPLE_BYTES: usize = 32 * 1024;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum UnknownPolicy {
@@ -62,13 +63,13 @@ pub fn detect_format(bytes: &[u8], options: DetectOptions<'_>) -> Result<String,
 }
 
 pub fn detect_format_path(path: &Path, options: DetectOptions<'_>) -> Result<String, ExtractError> {
-  let head = read_file_head(path, DETECT_HEAD_BYTES)?;
-  let zip_kind = if looks_like_zip(&head) {
+  let sample = read_file_head(path, TEXT_HEURISTIC_SAMPLE_BYTES)?;
+  let zip_kind = if looks_like_zip(&sample[..sample.len().min(MAGIC_HEAD_BYTES)]) {
     with_file_reader(path, |file| inspect_zip(file))?
   } else {
     None
   };
-  resolve_format(&head, zip_kind.as_deref(), options)
+  resolve_format(&sample, zip_kind.as_deref(), options)
 }
 
 fn resolve_format(
@@ -82,21 +83,19 @@ fn resolve_format(
     return resolve_with_hint(normalize_hint(explicit), bytes, magic.as_deref(), zip_kind, true);
   }
 
+  if let Some(detected) = magic {
+    return Ok(detected);
+  }
+
   if let Some(extension) = options.extension_hint.filter(|value| !value.trim().is_empty()) {
     let normalized = normalize_hint(extension);
-    if magic_conflicts_with_hint(&normalized, magic.as_deref(), zip_kind) {
-      if let Some(detected) = magic {
-        return Ok(detected);
-      }
+    if normalized == "pdf" && looks_like_zip(bytes) {
+      return apply_unknown_policy(bytes, options.unknown_policy);
     }
     if is_text_extension_hint(&normalized) && !text_heuristic::looks_like_text(bytes) {
       return apply_unknown_policy(bytes, options.unknown_policy);
     }
-    return resolve_with_hint(normalized, bytes, magic.as_deref(), zip_kind, false);
-  }
-
-  if let Some(detected) = magic {
-    return Ok(detected);
+    return resolve_with_hint(normalized, bytes, None, zip_kind, false);
   }
 
   apply_unknown_policy(bytes, options.unknown_policy)
@@ -369,5 +368,20 @@ mod tests {
       },
     );
     assert!(result.is_err() || result.unwrap() != "pdf");
+  }
+
+  #[test]
+  fn magic_ics_before_txt_extension_hint() {
+    let bytes = b"BEGIN:VCALENDAR\nVERSION:2.0\nEND:VCALENDAR";
+    let result = detect_format(
+      bytes,
+      DetectOptions {
+        explicit_format: None,
+        extension_hint: Some("txt"),
+        unknown_policy: UnknownPolicy::TextIfLikely,
+      },
+    )
+    .unwrap();
+    assert_eq!(result, "ics");
   }
 }

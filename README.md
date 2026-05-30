@@ -53,7 +53,7 @@ const csv = await custom.extractText(someBuffer, 'csv')
 
 | Input | Hint source |
 |-------|-------------|
-| File path | extension + magic bytes |
+| File path | extension hint + magic bytes from file head |
 | URL | extension from pathname + magic bytes |
 | `Buffer` | **magic bytes only** (no filename) |
 
@@ -69,7 +69,7 @@ await docExtract.extractText(buffer, { unknown: 'reject' }) // strict: no text h
 
 ### Unknown content policy
 
-When format cannot be determined from magic bytes or extension:
+When format cannot be determined confidently:
 
 | `unknown` | Behavior |
 |-----------|----------|
@@ -77,7 +77,9 @@ When format cannot be determined from magic bytes or extension:
 | `reject` | Return `""` (unsupported) |
 | `text-lossy` | Try `txt` unless bytes are obviously binary |
 
-Detect priority: explicit `format` → path/URL extension → magic bytes → unknown policy.
+**Detection** uses explicit `format` first, then combines extension hints and magic bytes. Magic bytes override conflicting extensions when possible (e.g. `%PDF` vs a `.zip` path, ICS content vs a `.txt` name). Unknown bytes fall back according to `unknown` policy.
+
+Path-based text heuristics read up to **32 KB** of file head; magic/ZIP sniffing uses the first **4 KB**.
 
 ## API
 

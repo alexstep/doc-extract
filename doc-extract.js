@@ -300,11 +300,17 @@ function hintFromUrl(url) {
   }
 }
 
+function normalizeUnknownPolicy(value) {
+  if (value == null) return 'text-if-likely'
+  if (value === 'reject' || value === 'text-if-likely' || value === 'text-lossy') return value
+  throw new TypeError('unknown must be "reject", "text-if-likely", or "text-lossy"')
+}
+
 function nativeOptions(explicitFormat, extensionHint, callOptions, instance) {
   const maxFileSizeMB = effectiveMaxFileSizeMB(instance, callOptions)
   const options = {
     maxBytes: mbToBytes(maxFileSizeMB),
-    unknown: callOptions.unknown ?? 'text-if-likely',
+    unknown: normalizeUnknownPolicy(callOptions.unknown),
   }
   if (explicitFormat != null && explicitFormat !== '') {
     options.format = explicitFormat

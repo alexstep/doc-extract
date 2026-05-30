@@ -1,0 +1,527 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>doc-extract — browser demo (WASM)</title>
+    <script>
+      const WASI_WORKER_LINES = [
+        "import { instantiateNapiModuleSync, MessageHandler, WASI } from '@napi-rs/wasm-runtime'",
+        '',
+        'const handler = new MessageHandler({',
+        '  onLoad({ wasmModule, wasmMemory }) {',
+        '    const wasi = new WASI({',
+        '      print: function () {',
+        '        console.log.apply(console, arguments)',
+        '      },',
+        '      printErr: function () {',
+        '        console.error.apply(console, arguments)',
+        '      },',
+        '    })',
+        '    return instantiateNapiModuleSync(wasmModule, {',
+        '      childThread: true,',
+        '      wasi,',
+        '      overwriteImports(importObject) {',
+        '        importObject.env = {',
+        '          ...importObject.env,',
+        '          ...importObject.napi,',
+        '          ...importObject.emnapi,',
+        '          memory: wasmMemory,',
+        '        }',
+        '      },',
+        '    })',
+        '  },',
+        '})',
+        '',
+        'globalThis.onmessage = function (e) {',
+        '  handler.handle(e)',
+        '}',
+      ]
+      const WASI_WORKER_MODULE = WASI_WORKER_LINES.join('\n')
+
+      const IMPORT_MAP = {
+        imports: {
+          '@napi-rs/wasm-runtime':
+            'https://unpkg.com/@napi-rs/wasm-runtime@1.1.4/runtime.js',
+          '@emnapi/core':
+            'https://unpkg.com/@emnapi/core@1.10.0/dist/emnapi-core.esm-bundler.js',
+          '@emnapi/runtime':
+            'https://unpkg.com/@emnapi/runtime@1.10.0/dist/emnapi.esm-bundler.js',
+          '@emnapi/wasi-threads':
+            'https://unpkg.com/@emnapi/wasi-threads@1.2.1/dist/wasi-threads.esm-bundler.js',
+          '@tybys/wasm-util':
+            'https://unpkg.com/@tybys/wasm-util@0.10.2/dist/wasm-util.esm-bundler.js',
+          tslib: 'https://unpkg.com/tslib@2.8.1/tslib.es6.js',
+        },
+      }
+
+      const ES_MODULE_SHIMS_URL =
+        'https://unpkg.com/es-module-shims@2.8.1/dist/es-module-shims.wasm.js'
+
+      ;(function () {
+        const coepCredentialless = Boolean(window.chrome)
+        const controller = navigator.serviceWorker && navigator.serviceWorker.controller
+        if (controller) {
+          controller.postMessage({ type: 'coepCredentialless', value: coepCredentialless })
+          return
+        }
+        if (self.crossOriginIsolated !== false) return
+        if (!window.isSecureContext || !navigator.serviceWorker) return
+
+        const swSource = `
+const WASI_WORKER = ${JSON.stringify(WASI_WORKER_MODULE)};
+let coepCredentialless = false;
+self.addEventListener("install", () => self.skipWaiting());
+self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));
+self.addEventListener("message", (e) => {
+  if (e.data && e.data.type === "coepCredentialless") coepCredentialless = e.data.value;
+});
+self.addEventListener("fetch", (e) => {
+  const url = new URL(e.request.url);
+  if (url.pathname.endsWith("/wasi-worker.mjs")) {
+    e.respondWith(new Response(WASI_WORKER, {
+      headers: {
+        "Content-Type": "text/javascript",
+        "Cross-Origin-Resource-Policy": "cross-origin",
+      },
+    }));
+    return;
+  }
+  const req = e.request;
+  if (req.cache === "only-if-cached" && req.mode !== "same-origin") return;
+  const next = coepCredentialless && req.mode === "no-cors"
+    ? new Request(req, { credentials: "omit" })
+    : req;
+  e.respondWith(fetch(next).then((res) => {
+    if (res.status === 0) return res;
+    const headers = new Headers(res.headers);
+    headers.set("Cross-Origin-Embedder-Policy", coepCredentialless ? "credentialless" : "require-corp");
+    if (!coepCredentialless) headers.set("Cross-Origin-Resource-Policy", "cross-origin");
+    headers.set("Cross-Origin-Opener-Policy", "same-origin");
+    return new Response(res.body, { status: res.status, statusText: res.statusText, headers });
+  }).catch(console.error));
+});
+`
+        const scope =
+          location.pathname.slice(0, location.pathname.lastIndexOf('/') + 1) || '/'
+        const blobUrl = URL.createObjectURL(
+          new Blob([swSource], { type: 'text/javascript' }),
+        )
+        navigator.serviceWorker
+          .register(blobUrl, { scope })
+          .then((reg) => {
+            const reload = () => location.reload()
+            reg.addEventListener('updatefound', reload)
+            if (reg.active && !navigator.serviceWorker.controller) reload()
+          })
+          .catch((err) => console.error('COOP/COEP service worker failed:', err))
+      })()
+    </script>
+    <script type="importmap" id="doc-extract-importmap"></script>
+    <script>
+      document.getElementById('doc-extract-importmap').textContent =
+        JSON.stringify(IMPORT_MAP)
+    </script>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #0f1419;
+        --panel: #1a2332;
+        --border: #2d3a4f;
+        --text: #e7edf5;
+        --muted: #8b9cb3;
+        --accent: #3d8bfd;
+        --ok: #3ecf8e;
+        --warn: #f0a020;
+        --err: #f07178;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+      }
+
+      @media (prefers-color-scheme: light) {
+        :root {
+          --bg: #f4f6fa;
+          --panel: #fff;
+          --border: #d8dfea;
+          --text: #1a2332;
+          --muted: #5c6b80;
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.5;
+      }
+
+      main {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 2rem 1.25rem 3rem;
+      }
+
+      h1 {
+        margin: 0 0 0.35rem;
+        font-size: 1.5rem;
+        font-weight: 650;
+      }
+
+      .lead {
+        margin: 0 0 1.5rem;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      .lead a {
+        color: var(--accent);
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.35rem 0.65rem;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: var(--panel);
+        font-size: 0.82rem;
+        margin-bottom: 1rem;
+      }
+
+      .dot {
+        width: 0.55rem;
+        height: 0.55rem;
+        border-radius: 50%;
+        background: var(--muted);
+      }
+
+      .status.ok .dot {
+        background: var(--ok);
+      }
+
+      .status.warn .dot {
+        background: var(--warn);
+      }
+
+      .status.err .dot {
+        background: var(--err);
+      }
+
+      .drop {
+        border: 2px dashed var(--border);
+        border-radius: 12px;
+        padding: 2rem 1rem;
+        text-align: center;
+        background: var(--panel);
+        transition: border-color 0.15s, background 0.15s;
+        cursor: pointer;
+      }
+
+      .drop.dragover {
+        border-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, var(--panel));
+      }
+
+      .drop p {
+        margin: 0.25rem 0;
+      }
+
+      .drop .hint {
+        color: var(--muted);
+        font-size: 0.88rem;
+      }
+
+      input[type='file'] {
+        display: none;
+      }
+
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin: 1rem 0;
+      }
+
+      label.field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        font-size: 0.85rem;
+        color: var(--muted);
+        min-width: 140px;
+      }
+
+      label.field input,
+      label.field select {
+        padding: 0.45rem 0.55rem;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: var(--panel);
+        color: var(--text);
+        font: inherit;
+      }
+
+      pre.out {
+        margin: 0;
+        min-height: 220px;
+        max-height: 55vh;
+        overflow: auto;
+        padding: 1rem;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: #0b1017;
+        color: #dbe7ff;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font: 0.82rem/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+
+      @media (prefers-color-scheme: light) {
+        pre.out {
+          background: #f8fafc;
+          color: #1a2332;
+        }
+      }
+
+      .meta {
+        margin-top: 0.75rem;
+        font-size: 0.82rem;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>doc-extract in the browser</h1>
+      <p class="lead">
+        Live demo of
+        <a href="https://www.npmjs.com/package/@alexstep/doc-extract">@alexstep/doc-extract</a>
+        via <code>wasm32-wasip1-threads</code> (same Rust code as the native addon). Runtime
+        packages are loaded from
+        <a href="https://unpkg.com/@alexstep/doc-extract-wasm32-wasi@0.1.5">unpkg</a>.
+      </p>
+
+      <div id="isolation" class="status warn"><span class="dot"></span><span>Checking environment…</span></div>
+
+      <div id="drop" class="drop" tabindex="0" role="button" aria-label="Choose a file">
+        <p><strong>Drop a file here</strong> or click to browse</p>
+        <p class="hint">PDF, Office, EPUB, ICS, CSV, HTML, JSON, VCF, FB2, pkpass…</p>
+        <input id="file" type="file" />
+      </div>
+
+      <div class="row">
+        <label class="field">
+          format (optional)
+          <input id="format" placeholder="auto from extension" />
+        </label>
+        <label class="field">
+          unknown
+          <select id="unknown">
+            <option value="text-if-likely">text-if-likely</option>
+            <option value="reject">reject</option>
+            <option value="text-lossy">text-lossy</option>
+          </select>
+        </label>
+      </div>
+
+      <pre id="out" class="out">Loading WASM…</pre>
+      <p id="meta" class="meta"></p>
+    </main>
+
+    <script type="module">
+      const isolationEl = document.getElementById('isolation')
+      const dropEl = document.getElementById('drop')
+      const fileEl = document.getElementById('file')
+      const formatEl = document.getElementById('format')
+      const unknownEl = document.getElementById('unknown')
+      const outEl = document.getElementById('out')
+      const metaEl = document.getElementById('meta')
+
+      function setIsolation(ok, text) {
+        isolationEl.className = `status ${ok ? 'ok' : 'err'}`
+        isolationEl.querySelector('span:last-child').textContent = text
+      }
+
+      if (!self.crossOriginIsolated) {
+        setIsolation(
+          false,
+          'Enabling cross-origin isolation (page reloads once)…',
+        )
+        outEl.textContent =
+          'Waiting for COOP/COEP service worker. If this persists, open via npm run demo or GitHub Pages.'
+      } else {
+        main()
+      }
+
+      async function main() {
+      setIsolation(true, 'crossOriginIsolated — SharedArrayBuffer is available')
+
+      const {
+        getDefaultContext,
+        instantiateNapiModuleSync,
+        WASI,
+      } = await import('@napi-rs/wasm-runtime')
+
+      const PKG_VERSION = '0.1.5'
+      const WASM_BASE = `https://unpkg.com/@alexstep/doc-extract-wasm32-wasi@${PKG_VERSION}`
+
+      function createWorkerUrl() {
+        return new URL('wasi-worker.mjs', location.href).href
+      }
+
+      function createWasiWorker() {
+        const moduleUrl = createWorkerUrl()
+        const boot = `importScripts(${JSON.stringify(ES_MODULE_SHIMS_URL)});
+importShim.addImportMap(${JSON.stringify(IMPORT_MAP)});
+const queue = [];
+self.onmessage = (e) => queue.push(e);
+importShim(${JSON.stringify(moduleUrl)}).then(() => {
+  const handle = globalThis.onmessage;
+  for (const e of queue) handle(e);
+}).catch((e) => setTimeout(() => { throw e; }));`
+        const worker = new Worker(
+          URL.createObjectURL(new Blob([boot], { type: 'application/javascript' })),
+        )
+        worker.addEventListener('error', (e) => {
+          console.error('WASI worker failed to load:', e.message || e)
+        })
+        return worker
+      }
+
+      async function loadDocExtract() {
+        const wasi = new WASI({ version: 'preview1' })
+        const emnapiContext = getDefaultContext()
+        const sharedMemory = new WebAssembly.Memory({
+          initial: 4000,
+          maximum: 65536,
+          shared: true,
+        })
+
+        const wasmFile = await fetch(`${WASM_BASE}/doc-extract.wasm32-wasi.wasm`).then((res) => {
+          if (!res.ok) throw new Error(`Failed to fetch WASM (${res.status})`)
+          return res.arrayBuffer()
+        })
+
+        const { napiModule } = instantiateNapiModuleSync(wasmFile, {
+          context: emnapiContext,
+          asyncWorkPoolSize: 1,
+          wasi,
+          onCreateWorker() {
+            return createWasiWorker()
+          },
+          overwriteImports(importObject) {
+            importObject.env = {
+              ...importObject.env,
+              ...importObject.napi,
+              ...importObject.emnapi,
+              memory: sharedMemory,
+            }
+            return importObject
+          },
+          beforeInit({ instance }) {
+            for (const name of Object.keys(instance.exports)) {
+              if (name.startsWith('__napi_register__')) {
+                instance.exports[name]()
+              }
+            }
+          },
+        })
+
+        return napiModule.exports
+      }
+
+      let extractText
+
+      try {
+        const api = await loadDocExtract()
+        extractText = api.extractText
+        api.setMaxConcurrent(1)
+        api.setMaxBytes(42 * 1024 * 1024)
+        outEl.textContent = 'WASM loaded. Drop a file to extract text.'
+      } catch (err) {
+        outEl.textContent = `Failed to load WASM: ${err?.message || err}`
+        console.error(err)
+      }
+
+      function extHint(name) {
+        const i = name.lastIndexOf('.')
+        if (i < 0) return undefined
+        return name.slice(i + 1).toLowerCase()
+      }
+
+      function buildOptions(name) {
+        const options = { unknown: unknownEl.value }
+        const explicit = formatEl.value.trim()
+        if (explicit) {
+          options.format = explicit
+        } else {
+          const hint = extHint(name)
+          if (hint) options.extensionHint = hint
+        }
+        return options
+      }
+
+      async function runOnBytes(name, bytes) {
+        if (!extractText) return
+
+        const started = performance.now()
+        outEl.textContent = 'Extracting text…'
+        metaEl.textContent = ''
+
+        const timeoutMs = 60_000
+        let timer
+        try {
+          const text = await Promise.race([
+            extractText(bytes, buildOptions(name)),
+            new Promise((_, reject) => {
+              timer = setTimeout(() => reject(new Error('Timed out after 60s')), timeoutMs)
+            }),
+          ])
+          const ms = Math.round(performance.now() - started)
+          outEl.textContent =
+            text || '(empty result — unsupported format or no text layer)'
+          metaEl.textContent = `${name} · ${bytes.byteLength.toLocaleString()} bytes · ${ms} ms · ${text.length.toLocaleString()} chars`
+        } catch (err) {
+          outEl.textContent = String(err?.message || err)
+          metaEl.textContent = name
+        } finally {
+          clearTimeout(timer)
+        }
+      }
+
+      async function runOnFile(file) {
+        const bytes = new Uint8Array(await file.arrayBuffer())
+        await runOnBytes(file.name, bytes)
+      }
+
+      dropEl.addEventListener('click', () => fileEl.click())
+      dropEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          fileEl.click()
+        }
+      })
+      dropEl.addEventListener('dragover', (e) => {
+        e.preventDefault()
+        dropEl.classList.add('dragover')
+      })
+      dropEl.addEventListener('dragleave', () => dropEl.classList.remove('dragover'))
+      dropEl.addEventListener('drop', (e) => {
+        e.preventDefault()
+        dropEl.classList.remove('dragover')
+        const file = e.dataTransfer?.files?.[0]
+        if (file) runOnFile(file)
+      })
+      fileEl.addEventListener('change', () => {
+        const file = fileEl.files?.[0]
+        if (file) runOnFile(file)
+      })
+      }
+    </script>
+  </body>
+</html>

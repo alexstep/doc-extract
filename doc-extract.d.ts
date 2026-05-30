@@ -1,3 +1,38 @@
+export type DocExtractFormat =
+  | 'pdf'
+  | 'docx'
+  | 'docm'
+  | 'xlsx'
+  | 'xls'
+  | 'ods'
+  | 'pptx'
+  | 'pptm'
+  | 'epub'
+  | 'rtf'
+  | 'odt'
+  | 'fb2'
+  | 'ics'
+  | 'ifb'
+  | 'ical'
+  | 'json'
+  | 'jsonl'
+  | 'ndjson'
+  | 'vcf'
+  | 'vcard'
+  | 'csv'
+  | 'tsv'
+  | 'html'
+  | 'htm'
+  | 'xhtml'
+  | 'xml'
+  | 'txt'
+  | 'md'
+  | 'markdown'
+  | 'log'
+  | 'pkpass'
+
+export type UnknownPolicy = 'reject' | 'text-if-likely' | 'text-lossy'
+
 export interface DocExtractOptions {
   maxConcurrent?: number
   maxFileSizeMB?: number
@@ -7,8 +42,8 @@ export interface DocExtractOptions {
 }
 
 export interface ExtractCallOptions {
-  format?: string
-  unknown?: 'reject' | 'text-if-likely' | 'text-lossy'
+  format?: DocExtractFormat
+  unknown?: UnknownPolicy
   maxFileSizeMB?: number
   inMemoryThresholdMB?: number
   tempDir?: string
@@ -30,16 +65,28 @@ declare class DocExtract {
 
   constructor(options?: DocExtractOptions)
 
-  extractText(input: Buffer | string, formatOrOptions?: string | ExtractCallOptions): Promise<string>
-  parsePkPass(input: Buffer | string, options?: Pick<ExtractCallOptions, 'maxFileSizeMB' | 'inMemoryThresholdMB' | 'tempDir'>): Promise<PkPassResult | null>
+  extractText(
+    input: Buffer | string,
+    formatOrOptions?: DocExtractFormat | ExtractCallOptions,
+  ): Promise<string>
+  parsePkPass(
+    input: Buffer | string,
+    options?: Pick<ExtractCallOptions, 'maxFileSizeMB' | 'inMemoryThresholdMB' | 'tempDir'>,
+  ): Promise<PkPassResult | null>
 
   static setMaxConcurrent(n: number): void
   static setMaxFilesizeMB(n: number): void
   static setInMemoryThresholdMB(n: number): void
   static setMaxWorkingSetMB(n: number): void
   static setTempDir(dir: string | undefined): void
-  static extractText(input: Buffer | string, formatOrOptions?: string | ExtractCallOptions): Promise<string>
-  static parsePkPass(input: Buffer | string, options?: Pick<ExtractCallOptions, 'maxFileSizeMB' | 'inMemoryThresholdMB' | 'tempDir'>): Promise<PkPassResult | null>
+  static extractText(
+    input: Buffer | string,
+    formatOrOptions?: DocExtractFormat | ExtractCallOptions,
+  ): Promise<string>
+  static parsePkPass(
+    input: Buffer | string,
+    options?: Pick<ExtractCallOptions, 'maxFileSizeMB' | 'inMemoryThresholdMB' | 'tempDir'>,
+  ): Promise<PkPassResult | null>
 }
 
 export default DocExtract

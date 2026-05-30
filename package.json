@@ -1,6 +1,6 @@
 {
   "name": "@alexstep/doc-extract",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Native document text extraction for Node.js and Bun (PDF, Office, EPUB, and more)",
   "license": "MIT",
   "type": "commonjs",
@@ -33,6 +33,7 @@
     "cargo:test": "cargo test",
     "prepublishOnly": "napi create-npm-dirs && napi prepublish -t npm --no-gh-release",
     "test": "bun test",
+    "demo": "node scripts/demo-server.mjs",
     "test:wasi": "node scripts/test-wasi.cjs",
     "test:show": "bun test __tests__/show-extract.test.ts",
     "version": "napi version"

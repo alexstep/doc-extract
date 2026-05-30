@@ -9,6 +9,7 @@ build.rs
 __tests__/
 fixtures/
 examples/
+scripts/
 
 # Dev tooling & caches
 node_modules/
@@ -18,6 +19,3 @@ bun.lock
 .gitignore
 .DS_Store
 
-# Local-only / oversized fixtures (also in .gitignore)
-fixtures/sample1.pdf
-fixtures/sample2.pdf
