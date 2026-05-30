@@ -75,9 +75,9 @@ function requireNative() {
         loadErrors.push(e)
       }
       try {
-        const binding = require('doc-extract-android-arm64')
-        const bindingPackageVersion = require('doc-extract-android-arm64/package.json').version
-        if (bindingPackageVersion !== '0.1.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+        const binding = require('@alexstep/doc-extract-android-arm64')
+        const bindingPackageVersion = require('@alexstep/doc-extract-android-arm64/package.json').version
+        if (bindingPackageVersion !== '0.1.3' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
           throw new Error(`Native binding package version mismatch, expected 0.1.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
@@ -91,9 +91,9 @@ function requireNative() {
         loadErrors.push(e)
       }
       try {
-        const binding = require('doc-extract-android-arm-eabi')
-        const bindingPackageVersion = require('doc-extract-android-arm-eabi/package.json').version
-        if (bindingPackageVersion !== '0.1.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+        const binding = require('@alexstep/doc-extract-android-arm-eabi')
+        const bindingPackageVersion = require('@alexstep/doc-extract-android-arm-eabi/package.json').version
+        if (bindingPackageVersion !== '0.1.3' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
           throw new Error(`Native binding package version mismatch, expected 0.1.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
@@ -112,9 +112,9 @@ function requireNative() {
         loadErrors.push(e)
       }
       try {
-        const binding = require('doc-extract-win32-x64-gnu')
-        const bindingPackageVersion = require('doc-extract-win32-x64-gnu/package.json').version
-        if (bindingPackageVersion !== '0.1.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+        const binding = require('@alexstep/doc-extract-win32-x64-gnu')
+        const bindingPackageVersion = require('@alexstep/doc-extract-win32-x64-gnu/package.json').version
+        if (bindingPackageVersion !== '0.1.3' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
           throw new Error(`Native binding package version mismatch, expected 0.1.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
@@ -128,9 +128,9 @@ function requireNative() {
         loadErrors.push(e)
       }
       try {
-        const binding = require('doc-extract-win32-x64-msvc')
-        const bindingPackageVersion = require('doc-extract-win32-x64-msvc/package.json').version
-        if (bindingPackageVersion !== '0.1.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+        const binding = require('@alexstep/doc-extract-win32-x64-msvc')
+        const bindingPackageVersion = require('@alexstep/doc-extract-win32-x64-msvc/package.json').version
+        if (bindingPackageVersion !== '0.1.3' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
           throw new Error(`Native binding package version mismatch, expected 0.1.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
@@ -145,9 +145,9 @@ function requireNative() {
         loadErrors.push(e)
       }
       try {
-        const binding = require('doc-extract-win32-ia32-msvc')
-        const bindingPackageVersion = require('doc-extract-win32-ia32-msvc/package.json').version
-        if (bindingPackageVersion !== '0.1.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+        const binding = require('@alexstep/doc-extract-win32-ia32-msvc')
+        const bindingPackageVersion = require('@alexstep/doc-extract-win32-ia32-msvc/package.json').version
+        if (bindingPackageVersion !== '0.1.3' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
           throw new Error(`Native binding package version mismatch, expected 0.1.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
@@ -161,9 +161,9 @@ function requireNative() {
         loadErrors.push(e)
       }
       try {
-        const binding = require('doc-extract-win32-arm64-msvc')
-        const bindingPackageVersion = require('doc-extract-win32-arm64-msvc/package.json').version
-        if (bindingPackageVersion !== '0.1.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+        const binding = require('@alexstep/doc-extract-win32-arm64-msvc')
+        const bindingPackageVersion = require('@alexstep/doc-extract-win32-arm64-msvc/package.json').version
+        if (bindingPackageVersion !== '0.1.3' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
           throw new Error(`Native binding package version mismatch, expected 0.1.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
@@ -180,9 +180,9 @@ function requireNative() {
       loadErrors.push(e)
     }
     try {
-      const binding = require('doc-extract-darwin-universal')
-      const bindingPackageVersion = require('doc-extract-darwin-universal/package.json').version
-      if (bindingPackageVersion !== '0.1.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+      const binding = require('@alexstep/doc-extract-darwin-universal')
+      const bindingPackageVersion = require('@alexstep/doc-extract-darwin-universal/package.json').version
+      if (bindingPackageVersion !== '0.1.3' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
         throw new Error(`Native binding package version mismatch, expected 0.1.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
       }
       return binding
@@ -196,9 +196,9 @@ function requireNative() {
         loadErrors.push(e)
       }
       try {
-        const binding = require('doc-extract-darwin-x64')
-        const bindingPackageVersion = require('doc-extract-darwin-x64/package.json').version
-        if (bindingPackageVersion !== '0.1.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+        const binding = require('@alexstep/doc-extract-darwin-x64')
+        const bindingPackageVersion = require('@alexstep/doc-extract-darwin-x64/package.json').version
+        if (bindingPackageVersion !== '0.1.3' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
           throw new Error(`Native binding package version mismatch, expected 0.1.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
@@ -212,9 +212,9 @@ function requireNative() {
         loadErrors.push(e)
       }
       try {
-        const binding = require('doc-extract-darwin-arm64')
-        const bindingPackageVersion = require('doc-extract-darwin-arm64/package.json').version
-        if (bindingPackageVersion !== '0.1.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+        const binding = require('@alexstep/doc-extract-darwin-arm64')
+        const bindingPackageVersion = require('@alexstep/doc-extract-darwin-arm64/package.json').version
+        if (bindingPackageVersion !== '0.1.3' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
           throw new Error(`Native binding package version mismatch, expected 0.1.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
@@ -232,9 +232,9 @@ function requireNative() {
         loadErrors.push(e)
       }
       try {
-        const binding = require('doc-extract-freebsd-x64')
-        const bindingPackageVersion = require('doc-extract-freebsd-x64/package.json').version
-        if (bindingPackageVersion !== '0.1.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+        const binding = require('@alexstep/doc-extract-freebsd-x64')
+        const bindingPackageVersion = require('@alexstep/doc-extract-freebsd-x64/package.json').version
+        if (bindingPackageVersion !== '0.1.3' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
           throw new Error(`Native binding package version mismatch, expected 0.1.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
@@ -248,9 +248,9 @@ function requireNative() {
         loadErrors.push(e)
       }
       try {
-        const binding = require('doc-extract-freebsd-arm64')
-        const bindingPackageVersion = require('doc-extract-freebsd-arm64/package.json').version
-        if (bindingPackageVersion !== '0.1.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+        const binding = require('@alexstep/doc-extract-freebsd-arm64')
+        const bindingPackageVersion = require('@alexstep/doc-extract-freebsd-arm64/package.json').version
+        if (bindingPackageVersion !== '0.1.3' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
           throw new Error(`Native binding package version mismatch, expected 0.1.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
@@ -269,9 +269,9 @@ function requireNative() {
           loadErrors.push(e)
         }
         try {
-          const binding = require('doc-extract-linux-x64-musl')
-          const bindingPackageVersion = require('doc-extract-linux-x64-musl/package.json').version
-          if (bindingPackageVersion !== '0.1.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+          const binding = require('@alexstep/doc-extract-linux-x64-musl')
+          const bindingPackageVersion = require('@alexstep/doc-extract-linux-x64-musl/package.json').version
+          if (bindingPackageVersion !== '0.1.3' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
             throw new Error(`Native binding package version mismatch, expected 0.1.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
           return binding
@@ -285,9 +285,9 @@ function requireNative() {
           loadErrors.push(e)
         }
         try {
-          const binding = require('doc-extract-linux-x64-gnu')
-          const bindingPackageVersion = require('doc-extract-linux-x64-gnu/package.json').version
-          if (bindingPackageVersion !== '0.1.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+          const binding = require('@alexstep/doc-extract-linux-x64-gnu')
+          const bindingPackageVersion = require('@alexstep/doc-extract-linux-x64-gnu/package.json').version
+          if (bindingPackageVersion !== '0.1.3' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
             throw new Error(`Native binding package version mismatch, expected 0.1.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
           return binding
@@ -303,9 +303,9 @@ function requireNative() {
           loadErrors.push(e)
         }
         try {
-          const binding = require('doc-extract-linux-arm64-musl')
-          const bindingPackageVersion = require('doc-extract-linux-arm64-musl/package.json').version
-          if (bindingPackageVersion !== '0.1.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+          const binding = require('@alexstep/doc-extract-linux-arm64-musl')
+          const bindingPackageVersion = require('@alexstep/doc-extract-linux-arm64-musl/package.json').version
+          if (bindingPackageVersion !== '0.1.3' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
             throw new Error(`Native binding package version mismatch, expected 0.1.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
           return binding
@@ -319,9 +319,9 @@ function requireNative() {
           loadErrors.push(e)
         }
         try {
-          const binding = require('doc-extract-linux-arm64-gnu')
-          const bindingPackageVersion = require('doc-extract-linux-arm64-gnu/package.json').version
-          if (bindingPackageVersion !== '0.1.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+          const binding = require('@alexstep/doc-extract-linux-arm64-gnu')
+          const bindingPackageVersion = require('@alexstep/doc-extract-linux-arm64-gnu/package.json').version
+          if (bindingPackageVersion !== '0.1.3' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
             throw new Error(`Native binding package version mismatch, expected 0.1.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
           return binding
@@ -337,9 +337,9 @@ function requireNative() {
           loadErrors.push(e)
         }
         try {
-          const binding = require('doc-extract-linux-arm-musleabihf')
-          const bindingPackageVersion = require('doc-extract-linux-arm-musleabihf/package.json').version
-          if (bindingPackageVersion !== '0.1.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+          const binding = require('@alexstep/doc-extract-linux-arm-musleabihf')
+          const bindingPackageVersion = require('@alexstep/doc-extract-linux-arm-musleabihf/package.json').version
+          if (bindingPackageVersion !== '0.1.3' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
             throw new Error(`Native binding package version mismatch, expected 0.1.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
           return binding
@@ -353,9 +353,9 @@ function requireNative() {
           loadErrors.push(e)
         }
         try {
-          const binding = require('doc-extract-linux-arm-gnueabihf')
-          const bindingPackageVersion = require('doc-extract-linux-arm-gnueabihf/package.json').version
-          if (bindingPackageVersion !== '0.1.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+          const binding = require('@alexstep/doc-extract-linux-arm-gnueabihf')
+          const bindingPackageVersion = require('@alexstep/doc-extract-linux-arm-gnueabihf/package.json').version
+          if (bindingPackageVersion !== '0.1.3' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
             throw new Error(`Native binding package version mismatch, expected 0.1.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
           return binding
@@ -371,9 +371,9 @@ function requireNative() {
           loadErrors.push(e)
         }
         try {
-          const binding = require('doc-extract-linux-loong64-musl')
-          const bindingPackageVersion = require('doc-extract-linux-loong64-musl/package.json').version
-          if (bindingPackageVersion !== '0.1.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+          const binding = require('@alexstep/doc-extract-linux-loong64-musl')
+          const bindingPackageVersion = require('@alexstep/doc-extract-linux-loong64-musl/package.json').version
+          if (bindingPackageVersion !== '0.1.3' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
             throw new Error(`Native binding package version mismatch, expected 0.1.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
           return binding
@@ -387,9 +387,9 @@ function requireNative() {
           loadErrors.push(e)
         }
         try {
-          const binding = require('doc-extract-linux-loong64-gnu')
-          const bindingPackageVersion = require('doc-extract-linux-loong64-gnu/package.json').version
-          if (bindingPackageVersion !== '0.1.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+          const binding = require('@alexstep/doc-extract-linux-loong64-gnu')
+          const bindingPackageVersion = require('@alexstep/doc-extract-linux-loong64-gnu/package.json').version
+          if (bindingPackageVersion !== '0.1.3' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
             throw new Error(`Native binding package version mismatch, expected 0.1.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
           return binding
@@ -405,9 +405,9 @@ function requireNative() {
           loadErrors.push(e)
         }
         try {
-          const binding = require('doc-extract-linux-riscv64-musl')
-          const bindingPackageVersion = require('doc-extract-linux-riscv64-musl/package.json').version
-          if (bindingPackageVersion !== '0.1.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+          const binding = require('@alexstep/doc-extract-linux-riscv64-musl')
+          const bindingPackageVersion = require('@alexstep/doc-extract-linux-riscv64-musl/package.json').version
+          if (bindingPackageVersion !== '0.1.3' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
             throw new Error(`Native binding package version mismatch, expected 0.1.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
           return binding
@@ -421,9 +421,9 @@ function requireNative() {
           loadErrors.push(e)
         }
         try {
-          const binding = require('doc-extract-linux-riscv64-gnu')
-          const bindingPackageVersion = require('doc-extract-linux-riscv64-gnu/package.json').version
-          if (bindingPackageVersion !== '0.1.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+          const binding = require('@alexstep/doc-extract-linux-riscv64-gnu')
+          const bindingPackageVersion = require('@alexstep/doc-extract-linux-riscv64-gnu/package.json').version
+          if (bindingPackageVersion !== '0.1.3' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
             throw new Error(`Native binding package version mismatch, expected 0.1.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
           }
           return binding
@@ -438,9 +438,9 @@ function requireNative() {
         loadErrors.push(e)
       }
       try {
-        const binding = require('doc-extract-linux-ppc64-gnu')
-        const bindingPackageVersion = require('doc-extract-linux-ppc64-gnu/package.json').version
-        if (bindingPackageVersion !== '0.1.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+        const binding = require('@alexstep/doc-extract-linux-ppc64-gnu')
+        const bindingPackageVersion = require('@alexstep/doc-extract-linux-ppc64-gnu/package.json').version
+        if (bindingPackageVersion !== '0.1.3' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
           throw new Error(`Native binding package version mismatch, expected 0.1.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
@@ -454,9 +454,9 @@ function requireNative() {
         loadErrors.push(e)
       }
       try {
-        const binding = require('doc-extract-linux-s390x-gnu')
-        const bindingPackageVersion = require('doc-extract-linux-s390x-gnu/package.json').version
-        if (bindingPackageVersion !== '0.1.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+        const binding = require('@alexstep/doc-extract-linux-s390x-gnu')
+        const bindingPackageVersion = require('@alexstep/doc-extract-linux-s390x-gnu/package.json').version
+        if (bindingPackageVersion !== '0.1.3' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
           throw new Error(`Native binding package version mismatch, expected 0.1.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
@@ -474,9 +474,9 @@ function requireNative() {
         loadErrors.push(e)
       }
       try {
-        const binding = require('doc-extract-openharmony-arm64')
-        const bindingPackageVersion = require('doc-extract-openharmony-arm64/package.json').version
-        if (bindingPackageVersion !== '0.1.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+        const binding = require('@alexstep/doc-extract-openharmony-arm64')
+        const bindingPackageVersion = require('@alexstep/doc-extract-openharmony-arm64/package.json').version
+        if (bindingPackageVersion !== '0.1.3' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
           throw new Error(`Native binding package version mismatch, expected 0.1.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
@@ -490,9 +490,9 @@ function requireNative() {
         loadErrors.push(e)
       }
       try {
-        const binding = require('doc-extract-openharmony-x64')
-        const bindingPackageVersion = require('doc-extract-openharmony-x64/package.json').version
-        if (bindingPackageVersion !== '0.1.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+        const binding = require('@alexstep/doc-extract-openharmony-x64')
+        const bindingPackageVersion = require('@alexstep/doc-extract-openharmony-x64/package.json').version
+        if (bindingPackageVersion !== '0.1.3' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
           throw new Error(`Native binding package version mismatch, expected 0.1.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
@@ -506,9 +506,9 @@ function requireNative() {
         loadErrors.push(e)
       }
       try {
-        const binding = require('doc-extract-openharmony-arm')
-        const bindingPackageVersion = require('doc-extract-openharmony-arm/package.json').version
-        if (bindingPackageVersion !== '0.1.0' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
+        const binding = require('@alexstep/doc-extract-openharmony-arm')
+        const bindingPackageVersion = require('@alexstep/doc-extract-openharmony-arm/package.json').version
+        if (bindingPackageVersion !== '0.1.3' && process.env.NAPI_RS_ENFORCE_VERSION_CHECK && process.env.NAPI_RS_ENFORCE_VERSION_CHECK !== '0') {
           throw new Error(`Native binding package version mismatch, expected 0.1.0 but got ${bindingPackageVersion}. You can reinstall dependencies to fix this issue.`)
         }
         return binding
@@ -548,7 +548,7 @@ if (!nativeBinding || forceWasi) {
   }
   if (!nativeBinding || forceWasi) {
     try {
-      wasiBinding = require('doc-extract-wasm32-wasi')
+      wasiBinding = require('@alexstep/doc-extract-wasm32-wasi')
       nativeBinding = wasiBinding
     } catch (err) {
       if (forceWasi) {
