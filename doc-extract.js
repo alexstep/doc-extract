@@ -4,6 +4,7 @@ const { createWriteStream } = require('node:fs')
 const { mkdtemp, stat, unlink, writeFile } = require('node:fs/promises')
 const { tmpdir } = require('node:os')
 const { extname, join } = require('node:path')
+const { fileURLToPath } = require('node:url')
 
 const native = require('./index.js')
 
@@ -106,6 +107,17 @@ function effectiveTempDir(instance, callOptions) {
 
 function isUrl(value) {
   return /^https?:\/\//i.test(value)
+}
+
+function normalizePath(input) {
+  if (process.platform !== 'win32') return input
+  if (/^\/[a-zA-Z]:\//.test(input)) {
+    return input.slice(1)
+  }
+  if (input.startsWith('file://')) {
+    return fileURLToPath(input)
+  }
+  return input
 }
 
 function resolveDebug(instance, callOptions) {
@@ -268,11 +280,12 @@ async function resolveInput(input, instance, callOptions) {
     return { mode: 'path', path: tempPath, hint: hintFromUrl(input), cleanup: tempPath }
   }
 
-  await validatePathSize(input, maxFileSizeMB)
+  const path = normalizePath(input)
+  await validatePathSize(path, maxFileSizeMB)
   return {
     mode: 'path',
-    path: input,
-    hint: extname(input).replace(/^\./, '').toLowerCase() || undefined,
+    path,
+    hint: extname(path).replace(/^\./, '').toLowerCase() || undefined,
   }
 }
 

@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, spyOn } from 'bun:test'
 import docExtract from '../doc-extract.js'
+import { fixturePath } from './helpers.ts'
 
-const sample2Path = new URL('../fixtures/sample2.pdf', import.meta.url).pathname
+const sample2Path = fixturePath('sample2.pdf')
 
 describe('extractText soft failures', () => {
   afterEach(() => {

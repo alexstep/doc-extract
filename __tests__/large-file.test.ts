@@ -4,8 +4,9 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { strToU8, zipSync } from 'fflate'
 import docExtract from '../doc-extract.js'
+import { fixturePath } from './helpers.ts'
 
-const textFixturePath = new URL('../fixtures/sample.txt', import.meta.url).pathname
+const textFixturePath = fixturePath('sample.txt')
 
 describe('large file pipeline', () => {
   afterEach(() => {

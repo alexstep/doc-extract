@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'bun:test'
 import docExtract from '../doc-extract.js'
+import { fixtureFile } from './helpers.ts'
 
-const textFixture = Bun.file(new URL('../fixtures/sample.txt', import.meta.url))
+const textFixture = fixtureFile('sample.txt')
 
 describe('DocExtract concurrency', () => {
   it('resolves many parallel extractText calls', async () => {

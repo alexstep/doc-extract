@@ -1,14 +1,15 @@
 import { describe, expect, it } from 'bun:test'
 import docExtract from '../doc-extract.js'
+import { fixtureFile, fixturePath } from './helpers.ts'
 
-const textFixture = Bun.file(new URL('../fixtures/sample.txt', import.meta.url))
-const icsFixture = Bun.file(new URL('../fixtures/sample.ics', import.meta.url))
-const csvFixture = Bun.file(new URL('../fixtures/sample.csv', import.meta.url))
-const htmlFixture = Bun.file(new URL('../fixtures/sample.html', import.meta.url))
-const xmlFixture = Bun.file(new URL('../fixtures/sample.xml', import.meta.url))
-const jsonFixture = Bun.file(new URL('../fixtures/sample.json', import.meta.url))
-const vcfFixture = Bun.file(new URL('../fixtures/sample.vcf', import.meta.url))
-const fb2Fixture = Bun.file(new URL('../fixtures/sample.fb2', import.meta.url))
+const textFixture = fixtureFile('sample.txt')
+const icsFixture = fixtureFile('sample.ics')
+const csvFixture = fixtureFile('sample.csv')
+const htmlFixture = fixtureFile('sample.html')
+const xmlFixture = fixtureFile('sample.xml')
+const jsonFixture = fixtureFile('sample.json')
+const vcfFixture = fixtureFile('sample.vcf')
+const fb2Fixture = fixtureFile('sample.fb2')
 
 describe('DocExtract.extractText', () => {
   it('extracts txt without format', async () => {
@@ -17,8 +18,7 @@ describe('DocExtract.extractText', () => {
   })
 
   it('extracts txt from path', async () => {
-    const path = new URL('../fixtures/sample.txt', import.meta.url).pathname
-    const value = await docExtract.extractText(path)
+    const value = await docExtract.extractText(fixturePath('sample.txt'))
     expect(value).toContain('CalendarTG')
   })
 

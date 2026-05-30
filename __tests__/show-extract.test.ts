@@ -5,8 +5,7 @@
  */
 import { describe, expect, it } from 'bun:test'
 import docExtract from '../doc-extract.js'
-
-const fixturesDir = new URL('../fixtures/', import.meta.url)
+import { fixturePath } from './helpers.ts'
 
 const FIXTURES = [
   'sample.txt',
@@ -34,8 +33,7 @@ function printExtract(name: string, text: string) {
 describe('show extracted text (visual)', () => {
   for (const filename of FIXTURES) {
     it(filename, async () => {
-      const path = new URL(filename, fixturesDir).pathname
-      const text = await docExtract.extractText(path)
+      const text = await docExtract.extractText(fixturePath(filename))
       printExtract(filename, text)
       expect(typeof text).toBe('string')
     })

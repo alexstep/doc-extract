@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'bun:test'
 import docExtract from '../doc-extract.js'
+import { fixtureFile, fixturePath } from './helpers.ts'
 
-const sample1Path = new URL('../fixtures/sample1.pdf', import.meta.url).pathname
-const sample2Path = new URL('../fixtures/sample2.pdf', import.meta.url).pathname
-const sample1Bytes = Buffer.from(await Bun.file(new URL('../fixtures/sample1.pdf', import.meta.url)).bytes())
-const sample2Bytes = Buffer.from(await Bun.file(new URL('../fixtures/sample2.pdf', import.meta.url)).bytes())
+const sample1Path = fixturePath('sample1.pdf')
+const sample2Path = fixturePath('sample2.pdf')
+const sample1Bytes = Buffer.from(await fixtureFile('sample1.pdf').bytes())
+const sample2Bytes = Buffer.from(await fixtureFile('sample2.pdf').bytes())
 
 describe('PDF fixtures', () => {
   it('extracts sample1.pdf from path with auto-detect', async () => {

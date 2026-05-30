@@ -97,12 +97,25 @@ jobs:
       - name: Build
         run: ${{ matrix.settings.build }}
 
-      - uses: actions/upload-artifact@v7
+      - name: Upload artifact (native)
+        if: matrix.settings.target != 'wasm32-wasip1-threads'
+        uses: actions/upload-artifact@v7
         with:
           name: bindings-${{ matrix.settings.target }}
+          path: ${{ env.APP_NAME }}.*.node
+          if-no-files-found: error
+
+      - name: Upload artifact (WASI)
+        if: matrix.settings.target == 'wasm32-wasip1-threads'
+        uses: actions/upload-artifact@v7
+        with:
+          name: bindings-wasm32-wasip1-threads
           path: |
-            ${{ env.APP_NAME }}.*.node
             ${{ env.APP_NAME }}.*.wasm
+            ${{ env.APP_NAME }}.wasi.cjs
+            ${{ env.APP_NAME }}.wasi-browser.js
+            wasi-worker.mjs
+            wasi-worker-browser.mjs
           if-no-files-found: error
 
   build-freebsd:
@@ -211,7 +224,7 @@ jobs:
         with:
           path: artifacts
 
-      - run: bunx napi artifacts
+      - run: bunx napi artifacts --build-output-dir artifacts/bindings-wasm32-wasip1-threads
 
       - name: List npm packages
         run: ls -R ./npm
