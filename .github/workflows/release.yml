@@ -178,6 +178,10 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
@@ -189,9 +193,7 @@ jobs:
           name: bindings-wasm32-wasip1-threads
           path: .
 
-      - run: bun test
-        env:
-          NAPI_RS_FORCE_WASI: error
+      - run: node scripts/test-wasi.cjs
 
   publish:
     name: Publish to npm

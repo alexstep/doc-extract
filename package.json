@@ -33,6 +33,7 @@
     "cargo:test": "cargo test",
     "prepublishOnly": "napi create-npm-dirs && napi prepublish -t npm",
     "test": "bun test",
+    "test:wasi": "node scripts/test-wasi.cjs",
     "test:show": "bun test __tests__/show-extract.test.ts",
     "version": "napi version"
   },
