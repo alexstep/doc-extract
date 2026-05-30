@@ -5,6 +5,8 @@
     "": {
       "name": "@calendar/doc-extract",
       "devDependencies": {
+        "@emnapi/core": "^1.10.0",
+        "@emnapi/runtime": "^1.10.0",
         "@napi-rs/cli": "^3.7.0",
         "@types/bun": "^1.3.3",
         "fflate": "^0.8.2",

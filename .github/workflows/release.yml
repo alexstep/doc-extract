@@ -119,10 +119,8 @@ jobs:
           version: '14.2'
           run: |
             sudo pkg install -y curl node npm rust
-            curl -fsSL https://bun.sh/install | bash
-            export PATH="$HOME/.bun/bin:$PATH"
-            bun install
-            bunx napi build --platform --release --target x86_64-unknown-freebsd
+            npm install
+            npx napi build --platform --release --target x86_64-unknown-freebsd
 
       - uses: actions/upload-artifact@v7
         with:

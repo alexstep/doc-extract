@@ -1,8 +1,8 @@
 # doc-extract
 
-Native document text extraction for **Node.js** and **Bun** written on Rust + N-API
+**Text extraction library for RAG pipelines, LLM apps, and AI agents** — turn uploaded documents into clean plain text before chunking, embedding, or indexing.
 
-Extract plain text from PDF, Office files, EPUB, calendars, contacts, Apple Wallet passes, and more
+Native addon for **Node.js** and **Bun** (Rust + N-API): fast, in-process, no subprocesses. PDF, Office, EPUB, calendars, contacts, Apple Wallet passes, and more.
 
 ## Why doc-extract
 
