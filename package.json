@@ -1,6 +1,6 @@
 {
   "name": "@alexstep/doc-extract",
-  "version": "0.1.5",
+  "version": "0.2.0",
   "description": "Native document text extraction for Node.js and Bun (PDF, Office, EPUB, and more)",
   "license": "MIT",
   "type": "commonjs",

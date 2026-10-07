@@ -18,7 +18,29 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  check-version:
+    name: Check tag version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      # Runs only for v* tags. workflow_dispatch skips this step and still succeeds,
+      # so manual builds are not blocked. A mismatch fails the workflow before the
+      # prebuild matrix starts.
+      - name: Fail unless the tag matches package.json
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME#v}"
+          pkg="$(node -p "require('./package.json').version")"
+          echo "tag=${tag} package.json=${pkg}"
+          if [ "${tag}" != "${pkg}" ]; then
+            echo "::error::Tag v${tag} does not match package.json version ${pkg}"
+            exit 1
+          fi
+
   build:
+    needs: check-version
     strategy:
       fail-fast: false
       matrix:
@@ -119,6 +141,7 @@ jobs:
           if-no-files-found: error
 
   build-freebsd:
+    needs: check-version
     runs-on: ubuntu-latest
     name: build x86_64-unknown-freebsd
     steps:
@@ -198,11 +221,17 @@ jobs:
   # Publishes only when a version tag (v*) is pushed. workflow_dispatch builds
   # artifacts but does not publish.
   #
-  # Required GitHub Actions secret (Settings → Secrets and variables → Actions).
-  # The token value is not stored in this repository:
-  #   NPM_TOKEN — npm automation or granular access token with permission to
-  #   publish @alexstep/doc-extract and the @alexstep/doc-extract-* platform
-  #   packages. The job maps it to NPM_TOKEN and NODE_AUTH_TOKEN.
+  # Auth is npm Trusted Publishing (OIDC), not an npm token. Do not set
+  # NPM_TOKEN or NODE_AUTH_TOKEN. On npmjs.com, each package below needs a
+  # GitHub Actions trusted publisher:
+  #   repository alexstep/doc-extract, workflow filename release.yml,
+  #   environment name left blank, and direct `npm publish` allowed
+  #   (configs created after 2026-09-03 default to stage-only).
+  # `npm publish` runs prepublishOnly, which runs `napi prepublish`. That
+  # command shells out to `npm publish` (npmClient defaults to npm) in each
+  # npm/<platform> directory with the inherited environment, including the
+  # Actions OIDC request variables. npm >= 11.5.1 uses that OIDC identity
+  # before any token. This job never sets NPM_TOKEN or NODE_AUTH_TOKEN.
   publish:
     name: Publish to npm
     if: startsWith(github.ref, 'refs/tags/v')
@@ -213,18 +242,46 @@ jobs:
       - test-native
       - test-wasi
     permissions:
+      id-token: write
       contents: read
     steps:
       - uses: actions/checkout@v6
 
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
+      - name: Fail unless the tag matches package.json
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME#v}"
+          pkg="$(node -p "require('./package.json').version")"
+          echo "tag=${tag} package.json=${pkg}"
+          if [ "${tag}" != "${pkg}" ]; then
+            echo "::error::Tag v${tag} does not match package.json version ${pkg}"
+            exit 1
+          fi
 
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
           registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - name: Require npm >= 11.5.1
+        run: |
+          set -euo pipefail
+          npm install -g npm@11
+          version="$(npm --version)"
+          echo "npm ${version}"
+          node -e '
+            const [major, minor, patch] = process.argv[1].split(".").map(Number)
+            const ok = major > 11 || (major === 11 && (minor > 5 || (minor === 5 && patch >= 1)))
+            if (!ok) {
+              console.error("npm " + process.argv[1] + " is older than 11.5.1")
+              process.exit(1)
+            }
+          ' "${version}"
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
 
       - run: bun install
 
@@ -242,8 +299,20 @@ jobs:
       - name: Verify scoped loader
         run: grep -q '@alexstep/doc-extract-' index.js
 
+      - name: Verify platform package versions
+        run: |
+          set -euo pipefail
+          pkg="$(node -p "require('./package.json').version")"
+          mismatch=0
+          for manifest in npm/*/package.json; do
+            found="$(node -p "require('./${manifest}').version")"
+            echo "${manifest} ${found}"
+            if [ "${found}" != "${pkg}" ]; then
+              echo "::error::${manifest} is ${found}, expected ${pkg}"
+              mismatch=1
+            fi
+          done
+          exit "${mismatch}"
+
       - name: Publish
         run: npm publish --access public
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
