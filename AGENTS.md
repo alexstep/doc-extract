@@ -48,6 +48,6 @@ bun scripts/bench.mjs
 - Do not break the public API in `doc-extract.d.ts` or the behavior of `doc-extract.js` (`extractText`, `parsePkPass`, the setters, and the soft-fail vs throw split).
 - Do not commit `*.node`, `target/`, `npm/`, WASI bundles, or `node_modules/`.
 - Do not bump `version` in `package.json` or `Cargo.toml` unless a release was explicitly requested.
-- Do not publish to npm or crates.io from an agent. The tag-only publish job is `.github/workflows/release.yml`. It needs a GitHub Actions secret named `NPM_TOKEN` (an npm automation or granular token that can publish `@alexstep/doc-extract` and the `@alexstep/doc-extract-*` platform packages). The token is not stored in the repo. `workflow_dispatch` builds artifacts and does not publish.
+- Do not publish to npm or crates.io from an agent, and do not create tags or GitHub releases. The tag-only publish job is `.github/workflows/release.yml`. It uses npm Trusted Publishing (OIDC): `permissions: id-token: write` and no `NPM_TOKEN` / `NODE_AUTH_TOKEN`. On npmjs.com each package needs a trusted publisher for workflow filename `release.yml` with the environment left blank, and with direct `npm publish` allowed. `workflow_dispatch` builds artifacts and does not publish. A tag `v*` must match `package.json` `version` or the workflow fails before the build matrix.
 - Keep `rustfmt.toml` (`tab_spaces = 2`). Run `cargo fmt` before finishing a Rust change.
 - Cloud agents install toolchains and the native addon via `.cursor/install.sh`, referenced from `.cursor/environment.json`.
