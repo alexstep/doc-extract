@@ -26,10 +26,10 @@ pub fn extract_from_path(path: &Path, max_bytes: usize) -> Result<String, Extrac
 }
 
 fn extract_reader<R: BufRead>(reader: R) -> Result<String, ExtractError> {
-  let mut parser = IcalParser::new(reader);
+  let parser = IcalParser::new(reader);
   let mut out = Vec::new();
 
-  while let Some(item) = parser.next() {
+  for item in parser {
     let calendar = item.map_err(|err| ExtractError::Parse(format!("ical: {err}")))?;
     for event in calendar.events {
       let mut summary = None;

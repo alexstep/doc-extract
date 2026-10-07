@@ -17,7 +17,8 @@ static STATE: LazyLock<RwLock<ConcurrencyState>> = LazyLock::new(|| {
   })
 });
 
-static MAX_WORKING_SET_BYTES: LazyLock<RwLock<Option<usize>>> = LazyLock::new(|| RwLock::new(initial_working_set()));
+static MAX_WORKING_SET_BYTES: LazyLock<RwLock<Option<usize>>> =
+  LazyLock::new(|| RwLock::new(initial_working_set()));
 static WORKING_SET_IN_USE: LazyLock<RwLock<usize>> = LazyLock::new(|| RwLock::new(0));
 
 fn initial_limit() -> usize {
@@ -52,9 +53,7 @@ pub fn set_max_working_set_bytes(n: u32) {
   } else {
     Some((n as usize).saturating_mul(1024 * 1024))
   };
-  *MAX_WORKING_SET_BYTES
-    .write()
-    .expect("working set lock") = limit;
+  *MAX_WORKING_SET_BYTES.write().expect("working set lock") = limit;
 }
 
 async fn acquire_working_set(weight: usize) -> Result<WorkingSetGuard, ExtractError> {

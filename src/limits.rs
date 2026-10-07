@@ -46,7 +46,9 @@ pub fn global_max_bytes() -> usize {
 }
 
 pub fn global_in_memory_threshold() -> usize {
-  *IN_MEMORY_THRESHOLD.read().expect("in memory threshold lock")
+  *IN_MEMORY_THRESHOLD
+    .read()
+    .expect("in memory threshold lock")
 }
 
 pub fn effective_max_bytes(override_bytes: Option<u32>) -> usize {

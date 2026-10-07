@@ -3,8 +3,8 @@ use std::fs::File;
 use std::io::{Cursor, Read, Seek};
 use std::path::Path;
 
-use base64::Engine;
 use base64::engine::general_purpose::STANDARD;
+use base64::Engine;
 use serde_json::Value;
 use zip::ZipArchive;
 
@@ -12,11 +12,17 @@ use crate::error::ExtractError;
 use crate::formats::text::decode_text_with_bom;
 use crate::formats::zip_util::read_zip_entry_limited;
 use crate::input::validate_path_size;
-use crate::limits::{MAX_IMAGE_SIZE, effective_entry_size};
+use crate::limits::{effective_entry_size, MAX_IMAGE_SIZE};
 
 mod format_for_ai;
 
-const PASSKIT_PASS_TYPES: [&str; 5] = ["eventTicket", "boardingPass", "coupon", "generic", "storeCard"];
+const PASSKIT_PASS_TYPES: [&str; 5] = [
+  "eventTicket",
+  "boardingPass",
+  "coupon",
+  "generic",
+  "storeCard",
+];
 const STRIP_IMAGE_PRIORITY: [&str; 3] = ["strip@2x.png", "strip@3x.png", "strip.png"];
 
 #[derive(Debug, Clone)]
@@ -35,7 +41,10 @@ pub fn parse_pkpass(input: &[u8], max_bytes: usize) -> Result<Option<ParsedPkPas
   build_parsed_pkpass(files)
 }
 
-pub fn parse_pkpass_from_path(path: &Path, max_bytes: usize) -> Result<Option<ParsedPkPass>, ExtractError> {
+pub fn parse_pkpass_from_path(
+  path: &Path,
+  max_bytes: usize,
+) -> Result<Option<ParsedPkPass>, ExtractError> {
   validate_path_size(path, max_bytes)?;
   let entry_limit = effective_entry_size(max_bytes);
   let file = File::open(path).map_err(|err| ExtractError::Io(format!("pkpass open: {err}")))?;
@@ -51,7 +60,10 @@ pub fn extract_text(input: &[u8], max_bytes: usize) -> Result<Option<String>, Ex
   format_parsed(parsed)
 }
 
-pub fn extract_text_from_path(path: &Path, max_bytes: usize) -> Result<Option<String>, ExtractError> {
+pub fn extract_text_from_path(
+  path: &Path,
+  max_bytes: usize,
+) -> Result<Option<String>, ExtractError> {
   let parsed = parse_pkpass_from_path(path, max_bytes)?;
   format_parsed(parsed)
 }
@@ -67,7 +79,9 @@ fn format_parsed(parsed: Option<ParsedPkPass>) -> Result<Option<String>, Extract
   Ok(Some(event_info))
 }
 
-fn build_parsed_pkpass(files: HashMap<String, Vec<u8>>) -> Result<Option<ParsedPkPass>, ExtractError> {
+fn build_parsed_pkpass(
+  files: HashMap<String, Vec<u8>>,
+) -> Result<Option<ParsedPkPass>, ExtractError> {
   let pass_bytes = match files.get("pass.json") {
     Some(bytes) => bytes,
     None => return Ok(None),
@@ -82,7 +96,7 @@ fn build_parsed_pkpass(files: HashMap<String, Vec<u8>>) -> Result<Option<ParsedP
     return Ok(None);
   }
 
-  let localization = largest_strings_file(&files).map(|bytes| decode_text_with_bom(bytes));
+  let localization = largest_strings_file(&files).map(decode_text_with_bom);
   let strip_image = read_strip_image(&files);
 
   Ok(Some(ParsedPkPass {

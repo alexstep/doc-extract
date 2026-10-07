@@ -10,8 +10,8 @@ use quick_xml::reader::Reader;
 
 use crate::detect::text_heuristic;
 use crate::error::ExtractError;
-use crate::input::validate_path_size;
 use crate::formats::read_path_bytes;
+use crate::input::validate_path_size;
 
 pub fn decode_text_with_bom(input: &[u8]) -> String {
   if input.len() >= 2 && input[0] == 0xFF && input[1] == 0xFE {
@@ -53,7 +53,11 @@ pub fn extract_csv(input: &[u8], delimiter: u8) -> Result<String, ExtractError> 
   extract_csv_reader(Cursor::new(input), delimiter)
 }
 
-pub fn extract_csv_from_path(path: &Path, delimiter: u8, max_bytes: usize) -> Result<String, ExtractError> {
+pub fn extract_csv_from_path(
+  path: &Path,
+  delimiter: u8,
+  max_bytes: usize,
+) -> Result<String, ExtractError> {
   validate_path_size(path, max_bytes)?;
   let file = File::open(path).map_err(|err| ExtractError::Io(format!("csv open: {err}")))?;
   extract_csv_reader(BufReader::new(file), delimiter)
@@ -88,7 +92,8 @@ pub fn extract_html_from_path(path: &Path, max_bytes: usize) -> Result<String, E
 }
 
 fn extract_html_reader<R: Read>(reader: R) -> Result<String, ExtractError> {
-  let text = html2text::from_read(reader, 120).map_err(|err| ExtractError::Parse(format!("html: {err}")))?;
+  let text =
+    html2text::from_read(reader, 120).map_err(|err| ExtractError::Parse(format!("html: {err}")))?;
   Ok(text)
 }
 

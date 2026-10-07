@@ -12,7 +12,12 @@ pub fn looks_like_utf16(bytes: &[u8]) -> bool {
   }
 
   let even_nuls = sample.iter().step_by(2).filter(|&&b| b == 0).count();
-  let odd_nuls = sample.iter().skip(1).step_by(2).filter(|&&b| b == 0).count();
+  let odd_nuls = sample
+    .iter()
+    .skip(1)
+    .step_by(2)
+    .filter(|&&b| b == 0)
+    .count();
 
   let even_ratio = even_nuls as f32 / half as f32;
   let odd_ratio = odd_nuls as f32 / half as f32;
@@ -57,13 +62,7 @@ pub fn looks_like_text(bytes: &[u8]) -> bool {
 
   let printable_or_space = sample
     .iter()
-    .filter(|&&b| {
-      b == b'\n'
-        || b == b'\r'
-        || b == b'\t'
-        || (0x20..=0x7E).contains(&b)
-        || b >= 0x80
-    })
+    .filter(|&&b| b == b'\n' || b == b'\r' || b == b'\t' || (0x20..=0x7E).contains(&b) || b >= 0x80)
     .count();
 
   let printable_ratio = printable_or_space as f32 / sample.len() as f32;
@@ -87,7 +86,12 @@ pub fn utf16_endian_from_sample(bytes: &[u8]) -> Option<&'static encoding_rs::En
     return None;
   }
   let even_nuls = sample.iter().step_by(2).filter(|&&b| b == 0).count();
-  let odd_nuls = sample.iter().skip(1).step_by(2).filter(|&&b| b == 0).count();
+  let odd_nuls = sample
+    .iter()
+    .skip(1)
+    .step_by(2)
+    .filter(|&&b| b == 0)
+    .count();
   let even_ratio = even_nuls as f32 / half as f32;
   let odd_ratio = odd_nuls as f32 / half as f32;
   if odd_ratio >= even_ratio {
