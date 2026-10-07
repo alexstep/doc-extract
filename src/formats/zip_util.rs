@@ -5,7 +5,10 @@ use zip::read::ZipFile;
 use crate::error::ExtractError;
 use crate::limits::max_entry_size;
 
-pub fn read_zip_entry_limited(entry: &mut ZipFile<'_>, label: &str) -> Result<Vec<u8>, ExtractError> {
+pub fn read_zip_entry_limited(
+  entry: &mut ZipFile<'_>,
+  label: &str,
+) -> Result<Vec<u8>, ExtractError> {
   let max = max_entry_size();
   let mut buf = Vec::new();
   entry

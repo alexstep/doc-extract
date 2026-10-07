@@ -21,7 +21,9 @@ impl From<ExtractError> for Error {
   fn from(err: ExtractError) -> Self {
     let status = match &err {
       ExtractError::InputTooLarge | ExtractError::UnsupportedFormat(_) => Status::InvalidArg,
-      ExtractError::Parse(_) | ExtractError::EmptyResult | ExtractError::Io(_) => Status::GenericFailure,
+      ExtractError::Parse(_) | ExtractError::EmptyResult | ExtractError::Io(_) => {
+        Status::GenericFailure
+      }
       ExtractError::TaskJoin => Status::GenericFailure,
     };
     Error::new(status, err.to_string())

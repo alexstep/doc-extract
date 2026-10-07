@@ -10,12 +10,14 @@ use crate::formats;
 use crate::input::{read_file_head, with_file_reader};
 
 const SUPPORTED: &[&str] = &[
-  "pdf", "docx", "docm", "xlsx", "xls", "ods", "pptx", "pptm", "epub", "rtf", "odt", "fb2", "ics", "ifb", "ical",
-  "json", "jsonl", "ndjson", "vcf", "vcard", "csv", "tsv", "html", "htm", "xhtml", "xml", "txt", "md", "markdown",
-  "log", "pkpass",
+  "pdf", "docx", "docm", "xlsx", "xls", "ods", "pptx", "pptm", "epub", "rtf", "odt", "fb2", "ics",
+  "ifb", "ical", "json", "jsonl", "ndjson", "vcf", "vcard", "csv", "tsv", "html", "htm", "xhtml",
+  "xml", "txt", "md", "markdown", "log", "pkpass",
 ];
 
-const TEXT_EXTENSION_HINTS: &[&str] = &["txt", "md", "markdown", "csv", "tsv", "log", "json", "jsonl", "html", "xml"];
+const TEXT_EXTENSION_HINTS: &[&str] = &[
+  "txt", "md", "markdown", "csv", "tsv", "log", "json", "jsonl", "html", "xml",
+];
 
 const MAGIC_HEAD_BYTES: usize = 4096;
 const TEXT_HEURISTIC_SAMPLE_BYTES: usize = 32 * 1024;
@@ -29,7 +31,11 @@ pub enum UnknownPolicy {
 
 impl UnknownPolicy {
   pub fn parse(value: Option<&str>) -> Self {
-    match value.map(str::trim).map(|s| s.to_ascii_lowercase()).as_deref() {
+    match value
+      .map(str::trim)
+      .map(|s| s.to_ascii_lowercase())
+      .as_deref()
+    {
       Some("reject") => Self::Reject,
       Some("text-lossy") => Self::TextLossy,
       _ => Self::TextIfLikely,
@@ -79,15 +85,27 @@ fn resolve_format(
 ) -> Result<String, ExtractError> {
   let magic = detect_from_magic(bytes, zip_kind);
 
-  if let Some(explicit) = options.explicit_format.filter(|value| !value.trim().is_empty()) {
-    return resolve_with_hint(normalize_hint(explicit), bytes, magic.as_deref(), zip_kind, true);
+  if let Some(explicit) = options
+    .explicit_format
+    .filter(|value| !value.trim().is_empty())
+  {
+    return resolve_with_hint(
+      normalize_hint(explicit),
+      bytes,
+      magic.as_deref(),
+      zip_kind,
+      true,
+    );
   }
 
   if let Some(detected) = magic {
     return Ok(detected);
   }
 
-  if let Some(extension) = options.extension_hint.filter(|value| !value.trim().is_empty()) {
+  if let Some(extension) = options
+    .extension_hint
+    .filter(|value| !value.trim().is_empty())
+  {
     let normalized = normalize_hint(extension);
     if normalized == "pdf" && looks_like_zip(bytes) {
       return apply_unknown_policy(bytes, options.unknown_policy);
@@ -177,7 +195,12 @@ fn apply_unknown_policy(bytes: &[u8], policy: UnknownPolicy) -> Result<String, E
 }
 
 fn normalize_hint(hint: &str) -> String {
-  match hint.trim().trim_start_matches('.').to_ascii_lowercase().as_str() {
+  match hint
+    .trim()
+    .trim_start_matches('.')
+    .to_ascii_lowercase()
+    .as_str()
+  {
     "vcard" => "vcf".to_string(),
     "ical" | "ifb" => "ics".to_string(),
     "ndjson" => "jsonl".to_string(),
@@ -301,11 +324,16 @@ pub fn extract_with_format(bytes: &[u8], format: &str) -> Result<String, Extract
   }
 }
 
-pub fn extract_with_format_path(path: &Path, format: &str, max_bytes: usize) -> Result<String, ExtractError> {
+pub fn extract_with_format_path(
+  path: &Path,
+  format: &str,
+  max_bytes: usize,
+) -> Result<String, ExtractError> {
   let format = normalize_hint(format);
   match format.as_str() {
-    "pkpass" => crate::pkpass::extract_text_from_path(path, max_bytes)?
-      .ok_or(ExtractError::EmptyResult),
+    "pkpass" => {
+      crate::pkpass::extract_text_from_path(path, max_bytes)?.ok_or(ExtractError::EmptyResult)
+    }
     _ => formats::extract_text_from_path(path, &format, max_bytes),
   }
 }

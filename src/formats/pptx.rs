@@ -1,9 +1,7 @@
-use std::io::{Cursor, Read, Seek, Write};
+use std::io::{Cursor, Read, Seek};
 use std::path::Path;
 
 use zip::ZipArchive;
-use zip::write::SimpleFileOptions;
-use zip::ZipWriter;
 
 use crate::error::ExtractError;
 use crate::formats::open_file;
@@ -60,15 +58,22 @@ pub fn extract_reader<R: Read + Seek>(reader: R) -> Result<String, ExtractError>
     return Err(ExtractError::EmptyResult);
   }
 
-  Ok(slides
-    .into_iter()
-    .map(|(number, text)| format!("Slide {number}:\n{text}"))
-    .collect::<Vec<_>>()
-    .join("\n\n"))
+  Ok(
+    slides
+      .into_iter()
+      .map(|(number, text)| format!("Slide {number}:\n{text}"))
+      .collect::<Vec<_>>()
+      .join("\n\n"),
+  )
 }
 
 #[cfg(test)]
 mod tests {
+  use std::io::Write;
+
+  use zip::write::SimpleFileOptions;
+  use zip::ZipWriter;
+
   use super::*;
 
   #[test]

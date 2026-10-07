@@ -1,0 +1,4 @@
+{
+  "name": "doc-extract",
+  "install": "bash .cursor/install.sh"
+}

@@ -172,6 +172,20 @@ Typical integration pattern:
 1. Try `docExtract.extractText()` first (fast, in-process).
 2. If result is `""` or format is unsupported — call textract-docker (or your existing docparser service).
 
+## Benchmark
+
+`scripts/bench.mjs` times in-process `extractText` on the committed fixtures (default 20 iterations, buffer input). It is a local smoke check, not a cross-machine comparison.
+
+```bash
+node scripts/bench.mjs
+# or
+bun scripts/bench.mjs
+# optional iteration count
+node scripts/bench.mjs 50
+```
+
+`examples/bench-concurrent.mjs <file> [parallel]` times many parallel extracts of one path.
+
 ## Performance
 
 doc-extract runs **inside the Node/Bun process** — no HTTP, base64 encoding, or Docker hop per request. That makes it a better fit for high-throughput paths (batch imports) where latency and concurrency matter.

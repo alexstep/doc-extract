@@ -3,7 +3,9 @@ use std::path::Path;
 use crate::error::ExtractError;
 use crate::formats::read_path_bytes;
 
-const USEFUL_KEYS: [&str; 10] = ["FN", "N", "NICKNAME", "TEL", "EMAIL", "BDAY", "ADR", "ORG", "TITLE", "NOTE"];
+const USEFUL_KEYS: [&str; 10] = [
+  "FN", "N", "NICKNAME", "TEL", "EMAIL", "BDAY", "ADR", "ORG", "TITLE", "NOTE",
+];
 
 pub fn extract(input: &[u8]) -> Result<String, ExtractError> {
   let raw = super::text::decode_text_with_bom(input);

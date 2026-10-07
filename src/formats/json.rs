@@ -29,8 +29,8 @@ fn extract_json(input: &[u8], jsonl: bool) -> Result<String, ExtractError> {
       if line.is_empty() {
         continue;
       }
-      let value: serde_json::Value =
-        serde_json::from_str(line).map_err(|err| ExtractError::Parse(format!("jsonl line {}: {err}", index + 1)))?;
+      let value: serde_json::Value = serde_json::from_str(line)
+        .map_err(|err| ExtractError::Parse(format!("jsonl line {}: {err}", index + 1)))?;
       blocks.push(format!("Record {}:\n{}", index + 1, pretty_value(&value)));
     }
     return Ok(blocks.join("\n\n"));

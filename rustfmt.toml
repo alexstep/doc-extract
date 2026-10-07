@@ -1,0 +1,2 @@
+# Match the crate's existing two-space indent so `cargo fmt --check` stays stable.
+tab_spaces = 2

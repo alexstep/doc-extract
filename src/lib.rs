@@ -65,7 +65,10 @@ pub fn set_max_working_set_mb(n: u32) {
 }
 
 #[napi(js_name = "extractText")]
-pub async fn extract_text(input: Buffer, options: Option<ExtractNativeOptions>) -> napi::Result<String> {
+pub async fn extract_text(
+  input: Buffer,
+  options: Option<ExtractNativeOptions>,
+) -> napi::Result<String> {
   let options = options.unwrap_or(ExtractNativeOptions {
     format: None,
     extension_hint: None,
@@ -75,9 +78,7 @@ pub async fn extract_text(input: Buffer, options: Option<ExtractNativeOptions>) 
   let limit = effective_max_bytes(options.max_bytes);
   validate_size(&input, limit)?;
   let bytes = input.to_vec();
-  let explicit_format = options
-    .format
-    .filter(|value| !value.trim().is_empty());
+  let explicit_format = options.format.filter(|value| !value.trim().is_empty());
   let extension_hint = options
     .extension_hint
     .filter(|value| !value.trim().is_empty());
@@ -98,7 +99,10 @@ pub async fn extract_text(input: Buffer, options: Option<ExtractNativeOptions>) 
 }
 
 #[napi(js_name = "extractTextFromPath")]
-pub async fn extract_text_from_path(path: String, options: Option<ExtractNativeOptions>) -> napi::Result<String> {
+pub async fn extract_text_from_path(
+  path: String,
+  options: Option<ExtractNativeOptions>,
+) -> napi::Result<String> {
   let options = options.unwrap_or(ExtractNativeOptions {
     format: None,
     extension_hint: None,
@@ -108,9 +112,7 @@ pub async fn extract_text_from_path(path: String, options: Option<ExtractNativeO
   let path_buf = PathBuf::from(path);
   let limit = effective_max_bytes(options.max_bytes);
   let file_size = validate_path_size(&path_buf, limit)? as usize;
-  let explicit_format = options
-    .format
-    .filter(|value| !value.trim().is_empty());
+  let explicit_format = options.format.filter(|value| !value.trim().is_empty());
   let extension_hint = options
     .extension_hint
     .filter(|value| !value.trim().is_empty());
@@ -131,7 +133,10 @@ pub async fn extract_text_from_path(path: String, options: Option<ExtractNativeO
 }
 
 #[napi(js_name = "parsePkPass")]
-pub async fn parse_pk_pass(input: Buffer, options: Option<PkPassNativeOptions>) -> napi::Result<Option<PkPassResult>> {
+pub async fn parse_pk_pass(
+  input: Buffer,
+  options: Option<PkPassNativeOptions>,
+) -> napi::Result<Option<PkPassResult>> {
   let options = options.unwrap_or(PkPassNativeOptions { max_bytes: None });
   let limit = effective_max_bytes(options.max_bytes);
   validate_size(&input, limit)?;
@@ -156,9 +161,11 @@ pub async fn parse_pk_pass_from_path(
   let file_size = validate_path_size(&path_buf, limit)? as usize;
   let weight = working_set_weight(file_size);
 
-  let parsed = concurrency::with_permit(weight, move || pkpass::parse_pkpass_from_path(&path_buf, limit))
-    .await
-    .map_err(napi::Error::from)?;
+  let parsed = concurrency::with_permit(weight, move || {
+    pkpass::parse_pkpass_from_path(&path_buf, limit)
+  })
+  .await
+  .map_err(napi::Error::from)?;
 
   Ok(parsed.map(map_pkpass_result))
 }

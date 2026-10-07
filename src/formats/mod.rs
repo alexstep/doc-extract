@@ -4,7 +4,6 @@ use std::path::Path;
 use crate::error::ExtractError;
 use crate::input::read_file_bytes;
 
-pub mod zip_util;
 pub mod docx;
 pub mod epub;
 pub mod fb2;
@@ -17,6 +16,7 @@ pub mod rtf;
 pub mod spreadsheet;
 pub mod text;
 pub mod vcf;
+pub mod zip_util;
 
 pub fn extract_text(input: &[u8], format: &str) -> Result<String, ExtractError> {
   let format = format.trim().trim_start_matches('.').to_ascii_lowercase();
@@ -30,7 +30,11 @@ pub fn extract_text(input: &[u8], format: &str) -> Result<String, ExtractError> 
   Ok(normalized)
 }
 
-pub fn extract_text_from_path(path: &Path, format: &str, max_bytes: usize) -> Result<String, ExtractError> {
+pub fn extract_text_from_path(
+  path: &Path,
+  format: &str,
+  max_bytes: usize,
+) -> Result<String, ExtractError> {
   let format = format.trim().trim_start_matches('.').to_ascii_lowercase();
   let text = match format.as_str() {
     "pdf" => pdf::extract_from_path(path, max_bytes)?,
@@ -102,5 +106,56 @@ mod tests {
     let ics = extract_text(input.as_bytes(), "ics").unwrap();
     let ical = extract_text(input.as_bytes(), "ical").unwrap();
     assert_eq!(ics, ical);
+  }
+
+  #[test]
+  fn extracts_committed_fixtures() {
+    let cases: &[(&str, &str, &str)] = &[
+      ("fixtures/sample.docx", "docx", "Docx fixture Привет"),
+      ("fixtures/sample.xlsx", "xlsx", "Xlsx fixture Привет"),
+      ("fixtures/sample.xls", "xls", "Xls fixture Привет"),
+      ("fixtures/sample.ods", "ods", "Ods fixture Привет"),
+      ("fixtures/sample.pptx", "pptx", "Pptx fixture 日本語"),
+      ("fixtures/sample.epub", "epub", "Epub fixture café"),
+      ("fixtures/sample.odt", "odt", "Odt fixture café"),
+      ("fixtures/sample.rtf", "rtf", "Rtf fixture"),
+      ("fixtures/sample.jsonl", "jsonl", "Jsonl fixture"),
+      ("fixtures/sample.tsv", "tsv", "Tsv fixture"),
+      ("fixtures/unicode.txt", "txt", "Привет café 日本語"),
+      (
+        "fixtures/sample.fb2",
+        "fb2",
+        "CalendarTG FB2 fixture paragraph",
+      ),
+    ];
+
+    for (relative, format, needle) in cases {
+      let path = Path::new(env!("CARGO_MANIFEST_DIR")).join(relative);
+      let bytes = std::fs::read(&path).unwrap_or_else(|err| panic!("read {relative}: {err}"));
+      let text = extract_text(&bytes, format).unwrap_or_else(|err| panic!("{relative}: {err}"));
+      assert!(
+        text.contains(needle),
+        "{relative} missing {needle:?}: {text}"
+      );
+    }
+  }
+
+  #[test]
+  fn broken_fixtures_fail_closed() {
+    for relative in [
+      "fixtures/broken/empty.pdf",
+      "fixtures/broken/empty.docx",
+      "fixtures/broken/empty.txt",
+      "fixtures/broken/truncated.pdf",
+      "fixtures/broken/truncated.docx",
+    ] {
+      let path = Path::new(env!("CARGO_MANIFEST_DIR")).join(relative);
+      let bytes = std::fs::read(&path).unwrap();
+      let format = path.extension().and_then(|ext| ext.to_str()).unwrap();
+      assert!(
+        extract_text(&bytes, format).is_err(),
+        "{relative} should not yield text"
+      );
+    }
   }
 }
