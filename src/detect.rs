@@ -3,11 +3,9 @@ pub mod text_heuristic;
 use std::io::{Cursor, Read, Seek};
 use std::path::Path;
 
-use zip::ZipArchive;
-
 use crate::error::ExtractError;
 use crate::formats;
-use crate::formats::zip_util::zip_entry_name;
+use crate::formats::zip_util::{open_zip, zip_entry_name};
 use crate::input::{read_file_head, with_file_reader};
 
 const SUPPORTED: &[&str] = &[
@@ -264,8 +262,7 @@ fn detect_from_magic(bytes: &[u8], zip_kind: Option<&str>) -> Option<String> {
 }
 
 fn inspect_zip<R: Read + Seek>(reader: R) -> Result<Option<String>, ExtractError> {
-  let mut archive =
-    ZipArchive::new(reader).map_err(|err| ExtractError::Parse(format!("zip detect: {err}")))?;
+  let mut archive = open_zip(reader, "zip detect")?;
   let mut names = Vec::new();
   for index in 0..archive.len() {
     let file = archive
@@ -316,15 +313,18 @@ fn inspect_zip<R: Read + Seek>(reader: R) -> Result<Option<String>, ExtractError
 #[allow(dead_code)]
 pub fn extract_auto(bytes: &[u8], hint: Option<&str>) -> Result<String, ExtractError> {
   let format = detect_format(bytes, DetectOptions::legacy_hint(hint))?;
-  extract_with_format(bytes, &format)
+  extract_with_format(bytes, &format, crate::limits::global_max_bytes())
 }
 
-pub fn extract_with_format(bytes: &[u8], format: &str) -> Result<String, ExtractError> {
+pub fn extract_with_format(
+  bytes: &[u8],
+  format: &str,
+  max_bytes: usize,
+) -> Result<String, ExtractError> {
   let format = normalize_hint(format);
   match format.as_str() {
-    "pkpass" => crate::pkpass::extract_text(bytes, crate::limits::global_max_bytes())?
-      .ok_or(ExtractError::EmptyResult),
-    _ => formats::extract_text(bytes, &format),
+    "pkpass" => crate::pkpass::extract_text(bytes, max_bytes)?.ok_or(ExtractError::EmptyResult),
+    _ => formats::extract_text(bytes, &format, max_bytes),
   }
 }
 

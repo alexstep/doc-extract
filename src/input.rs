@@ -3,12 +3,12 @@ use std::io::{Read, Seek, SeekFrom};
 use std::path::Path;
 
 use crate::error::ExtractError;
-use crate::limits::{exceeds_limit, UNLIMITED_BYTES};
+use crate::limits::{file_len_exceeds, UNLIMITED_BYTES};
 
 pub fn validate_path_size(path: &Path, limit: usize) -> Result<u64, ExtractError> {
   let metadata = fs::metadata(path).map_err(|err| ExtractError::Io(format!("metadata: {err}")))?;
   let size = metadata.len();
-  if exceeds_limit(size as usize, limit) {
+  if file_len_exceeds(size, limit) {
     return Err(ExtractError::InputTooLarge);
   }
   Ok(size)
