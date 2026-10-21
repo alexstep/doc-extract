@@ -114,7 +114,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
 
       - name: Install dependencies
-        run: bun install
+        run: bun install --frozen-lockfile
 
       - name: Build
         run: ${{ matrix.settings.build }}
@@ -154,9 +154,11 @@ jobs:
           operating_system: freebsd
           version: '14.2'
           run: |
-            sudo pkg install -y curl node npm rust
-            npm install
-            npx napi build --platform --release --target x86_64-unknown-freebsd
+            sudo pkg install -y curl rust
+            curl -fsSL https://bun.sh/install | bash
+            export PATH="$HOME/.bun/bin:$PATH"
+            bun install --frozen-lockfile
+            bunx napi build --platform --release --target x86_64-unknown-freebsd
 
       - uses: actions/upload-artifact@v7
         with:
@@ -185,7 +187,7 @@ jobs:
         with:
           bun-version: latest
 
-      - run: bun install
+      - run: bun install --frozen-lockfile
 
       - uses: actions/download-artifact@v8
         with:
@@ -209,7 +211,7 @@ jobs:
         with:
           bun-version: latest
 
-      - run: bun install
+      - run: bun install --frozen-lockfile
 
       - uses: actions/download-artifact@v8
         with:
@@ -258,7 +260,7 @@ jobs:
             exit 1
           fi
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
           registry-url: https://registry.npmjs.org
@@ -283,7 +285,7 @@ jobs:
         with:
           bun-version: latest
 
-      - run: bun install
+      - run: bun install --frozen-lockfile
 
       - run: bunx napi create-npm-dirs
 
