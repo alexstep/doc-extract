@@ -5,6 +5,8 @@ use thiserror::Error;
 pub enum ExtractError {
   #[error("Input exceeds max size")]
   InputTooLarge,
+  #[error("Input exceeds working set")]
+  WorkingSetExceeded,
   #[error("Unsupported format: {0}")]
   UnsupportedFormat(String),
   #[error("Parser failed: {0}")]
@@ -20,7 +22,9 @@ pub enum ExtractError {
 impl From<ExtractError> for Error {
   fn from(err: ExtractError) -> Self {
     let status = match &err {
-      ExtractError::InputTooLarge | ExtractError::UnsupportedFormat(_) => Status::InvalidArg,
+      ExtractError::InputTooLarge
+      | ExtractError::WorkingSetExceeded
+      | ExtractError::UnsupportedFormat(_) => Status::InvalidArg,
       ExtractError::Parse(_) | ExtractError::EmptyResult | ExtractError::Io(_) => {
         Status::GenericFailure
       }

@@ -5,6 +5,7 @@ mod formats;
 mod input;
 mod limits;
 mod pkpass;
+mod sync;
 
 use std::path::PathBuf;
 
@@ -92,7 +93,7 @@ pub async fn extract_text(
       unknown_policy,
     };
     let format = detect_format(&bytes, detect_options)?;
-    extract_with_format(&bytes, &format)
+    extract_with_format(&bytes, &format, limit)
   })
   .await
   .map_err(napi::Error::from)
@@ -111,7 +112,7 @@ pub async fn extract_text_from_path(
   });
   let path_buf = PathBuf::from(path);
   let limit = effective_max_bytes(options.max_bytes);
-  let file_size = validate_path_size(&path_buf, limit)? as usize;
+  let file_size = usize::try_from(validate_path_size(&path_buf, limit)?).unwrap_or(usize::MAX);
   let explicit_format = options.format.filter(|value| !value.trim().is_empty());
   let extension_hint = options
     .extension_hint
@@ -158,7 +159,7 @@ pub async fn parse_pk_pass_from_path(
   let options = options.unwrap_or(PkPassNativeOptions { max_bytes: None });
   let path_buf = PathBuf::from(path);
   let limit = effective_max_bytes(options.max_bytes);
-  let file_size = validate_path_size(&path_buf, limit)? as usize;
+  let file_size = usize::try_from(validate_path_size(&path_buf, limit)?).unwrap_or(usize::MAX);
   let weight = working_set_weight(file_size);
 
   let parsed = concurrency::with_permit(weight, move || {
@@ -207,7 +208,7 @@ mod tests {
 
   #[test]
   fn extracts_plain_text() {
-    let text = formats::extract_text("calendar".as_bytes(), "txt");
+    let text = formats::extract_text("calendar".as_bytes(), "txt", usize::MAX);
     assert!(text.is_ok());
     assert_eq!(text.unwrap_or_default(), "calendar");
   }

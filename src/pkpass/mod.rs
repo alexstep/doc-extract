@@ -3,16 +3,14 @@ use std::fs::File;
 use std::io::{Cursor, Read, Seek};
 use std::path::Path;
 
+use crate::error::ExtractError;
+use crate::formats::text::decode_text_with_bom;
+use crate::formats::zip_util::{open_zip, zip_entry_name, InflateBudget};
+use crate::input::validate_path_size;
+use crate::limits::MAX_IMAGE_SIZE;
 use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
 use serde_json::Value;
-use zip::ZipArchive;
-
-use crate::error::ExtractError;
-use crate::formats::text::decode_text_with_bom;
-use crate::formats::zip_util::read_zip_entry_limited;
-use crate::input::validate_path_size;
-use crate::limits::{effective_entry_size, MAX_IMAGE_SIZE};
 
 mod format_for_ai;
 
@@ -33,8 +31,7 @@ pub struct ParsedPkPass {
 }
 
 pub fn parse_pkpass(input: &[u8], max_bytes: usize) -> Result<Option<ParsedPkPass>, ExtractError> {
-  let entry_limit = effective_entry_size(max_bytes);
-  let files = match read_relevant_files(Cursor::new(input), entry_limit) {
+  let files = match read_relevant_files(Cursor::new(input), max_bytes) {
     Ok(files) => files,
     Err(_) => return Ok(None),
   };
@@ -46,9 +43,8 @@ pub fn parse_pkpass_from_path(
   max_bytes: usize,
 ) -> Result<Option<ParsedPkPass>, ExtractError> {
   validate_path_size(path, max_bytes)?;
-  let entry_limit = effective_entry_size(max_bytes);
   let file = File::open(path).map_err(|err| ExtractError::Io(format!("pkpass open: {err}")))?;
-  let files = match read_relevant_files(file, entry_limit) {
+  let files = match read_relevant_files(file, max_bytes) {
     Ok(files) => files,
     Err(_) => return Ok(None),
   };
@@ -119,10 +115,10 @@ fn read_strip_image(files: &HashMap<String, Vec<u8>>) -> Option<String> {
 
 fn read_relevant_files<R: Read + Seek>(
   reader: R,
-  _entry_limit: usize,
+  max_bytes: usize,
 ) -> Result<HashMap<String, Vec<u8>>, ExtractError> {
-  let mut archive =
-    ZipArchive::new(reader).map_err(|err| ExtractError::Parse(format!("pkpass zip: {err}")))?;
+  let mut archive = open_zip(reader, "pkpass")?;
+  let mut budget = InflateBudget::new(max_bytes);
   let mut files = HashMap::new();
 
   for index in 0..archive.len() {
@@ -132,12 +128,12 @@ fn read_relevant_files<R: Read + Seek>(
     if file.is_dir() {
       continue;
     }
-    let name = file.name().to_string();
+    let name = zip_entry_name(&file, &format!("pkpass entry #{index}"))?;
     if !is_needed_file(&name) {
       continue;
     }
 
-    let bytes = read_zip_entry_limited(&mut file, &format!("pkpass read {name}"))?;
+    let bytes = budget.read_entry(&mut file, &format!("pkpass read {name}"))?;
     files.insert(name, bytes);
   }
 

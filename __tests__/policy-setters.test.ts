@@ -54,4 +54,11 @@ describe('policy setters', () => {
   it('setMaxWorkingSetMB accepts positive values', () => {
     expect(() => docExtract.setMaxWorkingSetMB(512)).not.toThrow()
   })
+
+  it('rejects a payload heavier than the working set instead of waiting', async () => {
+    docExtract.setInMemoryThresholdMB(64)
+    docExtract.setMaxWorkingSetMB(1)
+    const bytes = Buffer.alloc(2 * 1024 * 1024, 0x41)
+    await expect(docExtract.extractText(bytes, 'txt')).rejects.toThrow('Input exceeds working set')
+  })
 })

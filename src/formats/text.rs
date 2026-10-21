@@ -1,4 +1,3 @@
-use std::borrow::Cow;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Cursor, Read};
 use std::path::Path;
@@ -121,8 +120,7 @@ fn extract_xml_reader(
   loop {
     match reader.read_event_into(&mut buf) {
       Ok(Event::Text(text)) => {
-        let value: Cow<'_, str> = text
-          .decode()
+        let value = quick_xml::escape::unescape(text.as_ref())
           .map_err(|err| ExtractError::Parse(format!("xml decode: {err}")))?;
         let trimmed = value.trim();
         if !trimmed.is_empty() {
@@ -130,10 +128,7 @@ fn extract_xml_reader(
         }
       }
       Ok(Event::CData(cdata)) => {
-        let value: Cow<'_, str> = cdata
-          .decode()
-          .map_err(|err| ExtractError::Parse(format!("xml cdata decode: {err}")))?;
-        let trimmed = value.trim();
+        let trimmed = cdata.trim();
         if !trimmed.is_empty() {
           out.push(trimmed.to_string());
         }

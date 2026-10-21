@@ -18,9 +18,9 @@ pub mod text;
 pub mod vcf;
 pub mod zip_util;
 
-pub fn extract_text(input: &[u8], format: &str) -> Result<String, ExtractError> {
+pub fn extract_text(input: &[u8], format: &str, max_bytes: usize) -> Result<String, ExtractError> {
   let format = format.trim().trim_start_matches('.').to_ascii_lowercase();
-  let text = extract_inner(&format, input)?;
+  let text = extract_inner(&format, input, max_bytes)?;
 
   let normalized = text.trim().to_string();
   if normalized.is_empty() {
@@ -38,12 +38,12 @@ pub fn extract_text_from_path(
   let format = format.trim().trim_start_matches('.').to_ascii_lowercase();
   let text = match format.as_str() {
     "pdf" => pdf::extract_from_path(path, max_bytes)?,
-    "docx" | "docm" => docx::extract_from_path(path)?,
-    "xlsx" | "xls" | "ods" => spreadsheet::extract_from_path(path)?,
-    "pptx" | "pptm" => pptx::extract_from_path(path)?,
-    "epub" => epub::extract_from_path(path)?,
+    "docx" | "docm" => docx::extract_from_path(path, max_bytes)?,
+    "xlsx" | "xls" | "ods" => spreadsheet::extract_from_path(path, max_bytes)?,
+    "pptx" | "pptm" => pptx::extract_from_path(path, max_bytes)?,
+    "epub" => epub::extract_from_path(path, max_bytes)?,
     "rtf" => rtf::extract_from_path(path, max_bytes)?,
-    "odt" => odt::extract_from_path(path)?,
+    "odt" => odt::extract_from_path(path, max_bytes)?,
     "fb2" => fb2::extract_from_path(path, max_bytes)?,
     "ics" | "ifb" | "ical" => ical::extract_from_path(path, max_bytes)?,
     "json" => json::extract_from_path(path, max_bytes)?,
@@ -65,15 +65,15 @@ pub fn extract_text_from_path(
   Ok(normalized)
 }
 
-fn extract_inner(format: &str, bytes: &[u8]) -> Result<String, ExtractError> {
+fn extract_inner(format: &str, bytes: &[u8], max_bytes: usize) -> Result<String, ExtractError> {
   match format {
     "pdf" => pdf::extract(bytes),
-    "docx" | "docm" => docx::extract(bytes),
-    "xlsx" | "xls" | "ods" => spreadsheet::extract(bytes),
-    "pptx" | "pptm" => pptx::extract(bytes),
-    "epub" => epub::extract(bytes),
+    "docx" | "docm" => docx::extract(bytes, max_bytes),
+    "xlsx" | "xls" | "ods" => spreadsheet::extract(bytes, max_bytes),
+    "pptx" | "pptm" => pptx::extract(bytes, max_bytes),
+    "epub" => epub::extract(bytes, max_bytes),
     "rtf" => rtf::extract(bytes),
-    "odt" => odt::extract(bytes),
+    "odt" => odt::extract(bytes, max_bytes),
     "fb2" => fb2::extract(bytes),
     "ics" | "ifb" | "ical" => ical::extract(bytes),
     "json" => json::extract(bytes),
@@ -103,8 +103,8 @@ mod tests {
   #[test]
   fn alias_ical_matches_ics() {
     let input = include_str!("../../fixtures/sample.ics");
-    let ics = extract_text(input.as_bytes(), "ics").unwrap();
-    let ical = extract_text(input.as_bytes(), "ical").unwrap();
+    let ics = extract_text(input.as_bytes(), "ics", usize::MAX).unwrap();
+    let ical = extract_text(input.as_bytes(), "ical", usize::MAX).unwrap();
     assert_eq!(ics, ical);
   }
 
@@ -132,7 +132,8 @@ mod tests {
     for (relative, format, needle) in cases {
       let path = Path::new(env!("CARGO_MANIFEST_DIR")).join(relative);
       let bytes = std::fs::read(&path).unwrap_or_else(|err| panic!("read {relative}: {err}"));
-      let text = extract_text(&bytes, format).unwrap_or_else(|err| panic!("{relative}: {err}"));
+      let text =
+        extract_text(&bytes, format, usize::MAX).unwrap_or_else(|err| panic!("{relative}: {err}"));
       assert!(
         text.contains(needle),
         "{relative} missing {needle:?}: {text}"
@@ -153,7 +154,7 @@ mod tests {
       let bytes = std::fs::read(&path).unwrap();
       let format = path.extension().and_then(|ext| ext.to_str()).unwrap();
       assert!(
-        extract_text(&bytes, format).is_err(),
+        extract_text(&bytes, format, usize::MAX).is_err(),
         "{relative} should not yield text"
       );
     }

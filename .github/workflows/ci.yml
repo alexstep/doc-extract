@@ -46,6 +46,15 @@ jobs:
       - name: cargo test
         run: cargo test
 
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-audit
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: cargo audit
+        run: cargo audit
+
   test:
     name: Node and Bun
     runs-on: ubuntu-latest
