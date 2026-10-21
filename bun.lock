@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "@calendar/doc-extract",
+      "name": "@alexstep/doc-extract",
       "devDependencies": {
         "@emnapi/core": "^1.11.3",
         "@emnapi/runtime": "^1.11.3",
