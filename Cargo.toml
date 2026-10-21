@@ -13,8 +13,11 @@ csv = "1.3"
 encoding_rs = "0.8"
 html2text = "0.17"
 ical = "0.11"
-napi = { version = "3", default-features = false, features = ["napi6", "async", "tokio_rt", "serde-json"] }
-napi-derive = "3"
+# napi 3.12+ and napi-build 2.4+ link the wasm32-wasip1-threads build against
+# emnapi v2 (emnapi_create_env), which is not released yet; emnapi 1.x fails to
+# link. Keep the napi crates on the line used by 0.2.0 until emnapi 2 ships.
+napi = { version = "~3.9", default-features = false, features = ["napi6", "async", "tokio_rt", "serde-json"] }
+napi-derive = "~3.5"
 tokio = { version = "1", features = ["rt", "sync"] }
 pdf-extract = "0.12"
 quick-xml = "0.42"
@@ -25,4 +28,4 @@ memmap2 = "0.9.11"
 zip = { version = "9.0", default-features = false, features = ["deflate"] }
 
 [build-dependencies]
-napi-build = "2"
+napi-build = "~2.3"
