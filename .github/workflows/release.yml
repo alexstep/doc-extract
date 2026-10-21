@@ -147,7 +147,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: cross-platform-actions/action@v1.1.0
+      - uses: cross-platform-actions/action@v1.6.0
         env:
           DEBUG: napi:*
         with:
