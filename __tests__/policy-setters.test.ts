@@ -47,11 +47,22 @@ describe('policy setters', () => {
     expect(text).toContain('CalendarTG')
   })
 
-  it('setMaxConcurrent ignores zero', () => {
-    expect(() => docExtract.setMaxConcurrent(0)).not.toThrow()
+  it('setMaxConcurrent(0) lifts the cap and still extracts', async () => {
+    docExtract.setMaxConcurrent(1)
+    docExtract.setMaxConcurrent(0)
+    const bytes = Buffer.from(await textFixture.bytes())
+    const text = await docExtract.extractText(bytes)
+    expect(text).toContain('CalendarTG')
   })
 
   it('setMaxWorkingSetMB accepts positive values', () => {
     expect(() => docExtract.setMaxWorkingSetMB(512)).not.toThrow()
+  })
+
+  it('rejects a payload heavier than the working set instead of waiting', async () => {
+    docExtract.setInMemoryThresholdMB(64)
+    docExtract.setMaxWorkingSetMB(1)
+    const bytes = Buffer.alloc(2 * 1024 * 1024, 0x41)
+    await expect(docExtract.extractText(bytes, 'txt')).rejects.toThrow('Input exceeds working set')
   })
 })

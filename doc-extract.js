@@ -109,6 +109,52 @@ function isUrl(value) {
   return /^https?:\/\//i.test(value)
 }
 
+function urlPolicy(instance, callOptions) {
+  const allowUrls = callOptions?.allowUrls ?? instance?.allowUrls
+  const allowedHosts = callOptions?.allowedHosts ?? instance?.allowedHosts
+  return {
+    allowUrls: allowUrls !== false,
+    allowedHosts: Array.isArray(allowedHosts) ? allowedHosts.map((host) => String(host)) : null,
+  }
+}
+
+function hostAllowed(url, allowedHosts) {
+  let hostname
+  try {
+    hostname = new URL(url).hostname.toLowerCase()
+  } catch {
+    return false
+  }
+  return allowedHosts.some((host) => host.toLowerCase() === hostname)
+}
+
+function assertRemoteAllowed(url, policy) {
+  if (!policy.allowUrls) {
+    throw new TypeError('URL inputs are disabled')
+  }
+  if (policy.allowedHosts && !hostAllowed(url, policy.allowedHosts)) {
+    throw new Error(`URL host is not allowed: ${new URL(url).hostname}`)
+  }
+}
+
+async function fetchFollowingAllowedHosts(url, signal, policy) {
+  let current = url
+  for (let hop = 0; hop < 5; hop++) {
+    assertRemoteAllowed(current, policy)
+    const response = await fetch(current, { signal, redirect: 'manual' })
+    if (response.status >= 300 && response.status < 400) {
+      const location = response.headers.get('location')
+      if (!location) {
+        throw new Error(`Failed to fetch URL: ${response.status}`)
+      }
+      current = new URL(location, current).href
+      continue
+    }
+    return response
+  }
+  throw new Error('URL fetch followed too many redirects')
+}
+
 function normalizePath(input) {
   if (process.platform !== 'win32') return input
   if (/^\/[a-zA-Z]:\//.test(input)) {
@@ -198,14 +244,16 @@ async function writeBufferToTemp(buffer, tempDir) {
   return tempPath
 }
 
-async function fetchToTemp(url, maxFileSizeMB, tempDir) {
+async function fetchToTemp(url, maxFileSizeMB, tempDir, policy) {
   const maxBytes = mbToBytes(maxFileSizeMB)
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
   const tempPath = await createTempFilePath(tempDir)
 
   try {
-    const response = await fetch(url, { signal: controller.signal })
+    const response = policy.allowedHosts
+      ? await fetchFollowingAllowedHosts(url, controller.signal, policy)
+      : await fetch(url, { signal: controller.signal })
     if (!response.ok) {
       throw new Error(`Failed to fetch URL: ${response.status}`)
     }
@@ -277,7 +325,9 @@ async function resolveInput(input, instance, callOptions) {
   }
 
   if (isUrl(input)) {
-    const tempPath = await fetchToTemp(input, maxFileSizeMB, tempDir)
+    const policy = urlPolicy(instance, callOptions)
+    assertRemoteAllowed(input, policy)
+    const tempPath = await fetchToTemp(input, maxFileSizeMB, tempDir, policy)
     return { mode: 'path', path: tempPath, hint: hintFromUrl(input), cleanup: tempPath }
   }
 
@@ -411,6 +461,12 @@ class DocExtract {
       this.maxConcurrent = options.maxConcurrent
       this._semaphore = new Semaphore(options.maxConcurrent)
     }
+    if (options.allowUrls != null) {
+      this.allowUrls = Boolean(options.allowUrls)
+    }
+    if (Array.isArray(options.allowedHosts)) {
+      this.allowedHosts = options.allowedHosts
+    }
     if (options.debug != null) {
       this.debug = Boolean(options.debug)
     }
@@ -426,7 +482,6 @@ class DocExtract {
 
   static setMaxConcurrent(n) {
     if (n == null || n < 0) return
-    if (n === 0) return
     native.setMaxConcurrent(n)
   }
 
