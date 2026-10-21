@@ -154,11 +154,11 @@ jobs:
           operating_system: freebsd
           version: '14.2'
           run: |
-            sudo pkg install -y curl rust
-            curl -fsSL https://bun.sh/install | bash
-            export PATH="$HOME/.bun/bin:$PATH"
-            bun install --frozen-lockfile
-            bunx napi build --platform --release --target x86_64-unknown-freebsd
+            # Bun has no FreeBSD build (the installer fetches a Linux binary),
+            # so this job installs with npm, as 0.2.0 did.
+            sudo pkg install -y node npm rust
+            npm install --no-save --no-package-lock
+            npx napi build --platform --release --target x86_64-unknown-freebsd
 
       - uses: actions/upload-artifact@v7
         with:
