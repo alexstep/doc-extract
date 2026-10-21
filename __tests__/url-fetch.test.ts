@@ -48,48 +48,6 @@ describe('URL fetch pipeline', () => {
     )
   })
 
-  it('rejects URL inputs when allowUrls is false', async () => {
-    let called = false
-    globalThis.fetch = (async () => {
-      called = true
-      return new Response('hello', { status: 200 })
-    }) as typeof fetch
-
-    await expect(
-      docExtract.extractText('https://example.com/file.txt', { allowUrls: false, format: 'txt' }),
-    ).rejects.toThrow('URL inputs are disabled')
-    expect(called).toBeFalse()
-  })
-
-  it('rejects a redirect to a host outside allowedHosts', async () => {
-    const seen: string[] = []
-    globalThis.fetch = (async (url: string | URL) => {
-      seen.push(String(url))
-      return new Response(null, {
-        status: 302,
-        headers: { location: 'http://169.254.169.254/latest' },
-      })
-    }) as typeof fetch
-
-    await expect(
-      docExtract.extractText('https://example.com/start.txt', {
-        allowedHosts: ['example.com'],
-        format: 'txt',
-      }),
-    ).rejects.toThrow('URL host is not allowed: 169.254.169.254')
-    expect(seen).toEqual(['https://example.com/start.txt'])
-  })
-
-  it('fetches a host that is on allowedHosts', async () => {
-    globalThis.fetch = (async () => new Response('allowed-body', { status: 200 })) as typeof fetch
-
-    const text = await docExtract.extractText('https://example.com/note.txt', {
-      allowedHosts: ['example.com'],
-      format: 'txt',
-    })
-    expect(text).toContain('allowed-body')
-  })
-
   it('cleans up temp file after fetch error', async () => {
     const tempRoot = await mkdtemp(join(tmpdir(), 'doc-extract-url-'))
     docExtract.setTempDir(tempRoot)

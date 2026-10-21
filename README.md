@@ -85,14 +85,14 @@ Path-based text heuristics read up to **32 KB** of file head; magic/ZIP sniffing
 
 | Method | Description |
 |--------|-------------|
-| `docExtract.extractText(input, format?)` | Extract text. `input` = `Buffer`, file path, or `http(s)://` URL. Optional `format` or `{ format, unknown, maxFileSizeMB, inMemoryThresholdMB, tempDir, allowUrls, allowedHosts }`. |
+| `docExtract.extractText(input, format?)` | Extract text. `input` = `Buffer`, file path, or `http(s)://` URL. Optional `format` or `{ format, unknown, maxFileSizeMB, inMemoryThresholdMB, tempDir }`. |
 | `docExtract.parsePkPass(input, options?)` | Parse `.pkpass` → `{ pass, localization?, stripImage? }`. |
-| `docExtract.setMaxConcurrent(n)` | Global parallel parse limit. `0` lifts a custom cap up to the built-in maximum (512). Negative values are ignored. |
+| `docExtract.setMaxConcurrent(n)` | Global parallel parse limit (`n === 0` or negative = no-op). |
 | `docExtract.setMaxFilesizeMB(n)` | Global max input size in MB (default **42**). `0` = unlimited. |
 | `docExtract.setInMemoryThresholdMB(n)` | Above this size, paths/URLs skip JS heap; buffers spill to temp (default **64**). |
 | `docExtract.setMaxWorkingSetMB(n)` | Optional cap on total in-flight parse memory (`0` = disabled). |
 | `docExtract.setTempDir(dir)` | Directory for auto-spill temp files. |
-| `new docExtract({ maxConcurrent, maxFileSizeMB, inMemoryThresholdMB, tempDir, debug, allowUrls, allowedHosts })` | Instance with its own limits and optional debug logging. `allowUrls: false` rejects URL inputs. `allowedHosts` checks the URL and each redirect. |
+| `new docExtract({ maxConcurrent, maxFileSizeMB, inMemoryThresholdMB, tempDir, debug })` | Instance with its own limits and optional debug logging. |
 
 **Environment:** `DOCEXTRACT_MAX_CONCURRENT`, `DOCEXTRACT_MAX_FILESIZE_MB`, `DOCEXTRACT_MAX_BYTES`, `DOCEXTRACT_IN_MEMORY_THRESHOLD_MB`, `DOCEXTRACT_MAX_WORKING_SET_MB`, `DOCEXTRACT_TMPDIR`, `DOCEXTRACT_DEBUG`.
 

@@ -39,10 +39,6 @@ export interface DocExtractOptions {
   inMemoryThresholdMB?: number
   tempDir?: string
   debug?: boolean
-  /** When false, `http(s)` inputs throw. Default: URLs stay enabled. */
-  allowUrls?: boolean
-  /** When set, only these hosts may be fetched, including redirect hops. */
-  allowedHosts?: string[]
 }
 
 export interface ExtractCallOptions {
@@ -52,10 +48,6 @@ export interface ExtractCallOptions {
   inMemoryThresholdMB?: number
   tempDir?: string
   debug?: boolean
-  /** When false, `http(s)` inputs throw. Default: URLs stay enabled. */
-  allowUrls?: boolean
-  /** When set, only these hosts may be fetched, including redirect hops. */
-  allowedHosts?: string[]
 }
 
 export interface PkPassResult {
@@ -70,8 +62,6 @@ declare class DocExtract {
   inMemoryThresholdMB?: number
   tempDir?: string
   debug?: boolean
-  allowUrls?: boolean
-  allowedHosts?: string[]
 
   constructor(options?: DocExtractOptions)
 
@@ -81,10 +71,7 @@ declare class DocExtract {
   ): Promise<string>
   parsePkPass(
     input: Buffer | string,
-    options?: Pick<
-      ExtractCallOptions,
-      'maxFileSizeMB' | 'inMemoryThresholdMB' | 'tempDir' | 'allowUrls' | 'allowedHosts'
-    >,
+    options?: Pick<ExtractCallOptions, 'maxFileSizeMB' | 'inMemoryThresholdMB' | 'tempDir'>,
   ): Promise<PkPassResult | null>
 
   static setMaxConcurrent(n: number): void
@@ -98,10 +85,7 @@ declare class DocExtract {
   ): Promise<string>
   static parsePkPass(
     input: Buffer | string,
-    options?: Pick<
-      ExtractCallOptions,
-      'maxFileSizeMB' | 'inMemoryThresholdMB' | 'tempDir' | 'allowUrls' | 'allowedHosts'
-    >,
+    options?: Pick<ExtractCallOptions, 'maxFileSizeMB' | 'inMemoryThresholdMB' | 'tempDir'>,
   ): Promise<PkPassResult | null>
 }
 

@@ -46,11 +46,10 @@ fn initial_working_set() -> Option<usize> {
 }
 
 pub fn set_max_concurrent(n: u32) {
-  let new_limit = if n == 0 {
-    MAX_LIMIT
-  } else {
-    (n as usize).clamp(1, MAX_LIMIT)
-  };
+  if n == 0 {
+    return;
+  }
+  let new_limit = (n as usize).clamp(1, MAX_LIMIT);
   let mut state = write(&STATE);
   apply_limit(&mut state, new_limit);
 }
@@ -184,10 +183,11 @@ mod tests {
   }
 
   #[test]
-  fn zero_lifts_the_cap_to_the_built_in_maximum() {
+  fn zero_leaves_the_limit_unchanged() {
     let previous = read(&STATE).limit;
+    set_max_concurrent(4);
     set_max_concurrent(0);
-    assert_eq!(read(&STATE).limit, MAX_LIMIT);
+    assert_eq!(read(&STATE).limit, 4);
     set_max_concurrent(previous as u32);
     assert_eq!(read(&STATE).limit, previous);
   }

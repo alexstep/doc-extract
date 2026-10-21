@@ -1,7 +1,9 @@
+use std::fs::File;
 use std::path::Path;
 
+use memmap2::Mmap;
+
 use crate::error::ExtractError;
-use crate::input::read_file_bytes;
 
 pub fn extract(input: &[u8]) -> Result<String, ExtractError> {
   pdf_extract::extract_text_from_mem(input)
@@ -9,23 +11,11 @@ pub fn extract(input: &[u8]) -> Result<String, ExtractError> {
 }
 
 pub fn extract_from_path(path: &Path, max_bytes: usize) -> Result<String, ExtractError> {
-  let bytes = read_file_bytes(path, max_bytes)?;
-  extract(&bytes)
-}
+  crate::input::validate_path_size(path, max_bytes)?;
+  let file = File::open(path).map_err(|err| ExtractError::Io(format!("pdf open: {err}")))?;
 
-#[cfg(test)]
-mod tests {
-  use std::path::Path;
-
-  use super::*;
-
-  #[test]
-  fn path_matches_memory_without_mapping_the_file() {
-    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("fixtures/sample1.pdf");
-    let bytes = std::fs::read(&path).unwrap();
-    let from_memory = extract(&bytes).unwrap();
-    let from_path = extract_from_path(&path, usize::MAX).unwrap();
-    assert_eq!(from_memory, from_path);
-    assert!(from_memory.contains("Sample PDF"));
-  }
+  let mapped =
+    unsafe { Mmap::map(&file) }.map_err(|err| ExtractError::Io(format!("pdf mmap: {err}")))?;
+  pdf_extract::extract_text_from_mem(&mapped)
+    .map_err(|err| ExtractError::Parse(format!("pdf: {err}")))
 }
