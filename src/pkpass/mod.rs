@@ -10,7 +10,7 @@ use zip::ZipArchive;
 
 use crate::error::ExtractError;
 use crate::formats::text::decode_text_with_bom;
-use crate::formats::zip_util::read_zip_entry_limited;
+use crate::formats::zip_util::{read_zip_entry_limited, zip_entry_name};
 use crate::input::validate_path_size;
 use crate::limits::{effective_entry_size, MAX_IMAGE_SIZE};
 
@@ -132,7 +132,7 @@ fn read_relevant_files<R: Read + Seek>(
     if file.is_dir() {
       continue;
     }
-    let name = file.name().to_string();
+    let name = zip_entry_name(&file, &format!("pkpass entry #{index}"))?;
     if !is_needed_file(&name) {
       continue;
     }

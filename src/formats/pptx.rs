@@ -5,7 +5,7 @@ use zip::ZipArchive;
 
 use crate::error::ExtractError;
 use crate::formats::open_file;
-use crate::formats::zip_util::read_zip_entry_limited;
+use crate::formats::zip_util::{read_zip_entry_limited, zip_entry_name};
 
 const MAX_TOTAL_SLIDES_SIZE: usize = 10 * 1024 * 1024;
 
@@ -28,7 +28,7 @@ pub fn extract_reader<R: Read + Seek>(reader: R) -> Result<String, ExtractError>
     let mut entry = archive
       .by_index(index)
       .map_err(|err| ExtractError::Parse(format!("pptx entry {index}: {err}")))?;
-    let name = entry.name().to_string();
+    let name = zip_entry_name(&entry, &format!("pptx entry {index}"))?;
     if !name.starts_with("ppt/slides/slide") || !name.ends_with(".xml") {
       continue;
     }

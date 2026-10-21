@@ -7,6 +7,7 @@ use zip::ZipArchive;
 
 use crate::error::ExtractError;
 use crate::formats;
+use crate::formats::zip_util::zip_entry_name;
 use crate::input::{read_file_head, with_file_reader};
 
 const SUPPORTED: &[&str] = &[
@@ -271,7 +272,10 @@ fn inspect_zip<R: Read + Seek>(reader: R) -> Result<Option<String>, ExtractError
       .by_index(index)
       .map_err(|err| ExtractError::Parse(format!("zip detect entry #{index}: {err}")))?;
     if !file.is_dir() {
-      names.push(file.name().to_string());
+      names.push(zip_entry_name(
+        &file,
+        &format!("zip detect entry #{index}"),
+      )?);
     }
   }
 

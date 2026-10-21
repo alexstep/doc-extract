@@ -5,8 +5,18 @@ use zip::read::ZipFile;
 use crate::error::ExtractError;
 use crate::limits::max_entry_size;
 
-pub fn read_zip_entry_limited(
-  entry: &mut ZipFile<'_>,
+pub fn zip_entry_name<R: Read + ?Sized>(
+  entry: &ZipFile<'_, R>,
+  label: &str,
+) -> Result<String, ExtractError> {
+  entry
+    .name()
+    .map(|name| name.into_owned())
+    .map_err(|err| ExtractError::Parse(format!("{label} name: {err}")))
+}
+
+pub fn read_zip_entry_limited<R: Read + ?Sized>(
+  entry: &mut ZipFile<'_, R>,
   label: &str,
 ) -> Result<Vec<u8>, ExtractError> {
   let max = max_entry_size();

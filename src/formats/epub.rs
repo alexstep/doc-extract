@@ -5,7 +5,7 @@ use zip::ZipArchive;
 
 use crate::error::ExtractError;
 use crate::formats::open_file;
-use crate::formats::zip_util::read_zip_entry_limited;
+use crate::formats::zip_util::{read_zip_entry_limited, zip_entry_name};
 
 const MAX_TOTAL_EPUB_SIZE: usize = 10 * 1024 * 1024;
 
@@ -27,7 +27,7 @@ pub fn extract_reader<R: Read + Seek>(reader: R) -> Result<String, ExtractError>
     let mut file = archive
       .by_index(index)
       .map_err(|err| ExtractError::Parse(format!("epub entry #{index}: {err}")))?;
-    let name = file.name().to_ascii_lowercase();
+    let name = zip_entry_name(&file, &format!("epub entry #{index}"))?.to_ascii_lowercase();
 
     if !(name.ends_with(".xhtml") || name.ends_with(".html") || name.ends_with(".htm")) {
       continue;
